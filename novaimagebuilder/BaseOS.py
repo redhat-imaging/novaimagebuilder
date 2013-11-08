@@ -35,6 +35,7 @@ class BaseOS(object):
         self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         self.env = StackEnvironment()
         self.cache = CacheManager()
+        self.cache.env = self.env
         self.syslinux = SyslinuxHelper()
         self.osinfo_dict = osinfo_dict
         self.install_type = install_type
