@@ -43,11 +43,11 @@ class TestOSInfo(TestCase):
 
     def test_os_for_iso(self):
         # TODO: implement test
-        self.skipTest('%s is only partially implemented and unused.' % __name__)
+        self.skipTest('Skipping: os_for_iso() is only partially implemented.')
 
     def test_os_for_tree(self):
         # TODO: implement test
-        self.skipTest('%s is only partially implemented and unused.' % __name__)
+        self.skipTest('Skipping: os_for_tree() is only partially implemented.')
 
     def test_install_script(self):
         config = {'admin_password': 'test_pw',
