@@ -57,7 +57,7 @@ class CacheManager(Singleton):
             self.log.debug("Creating cache index file (%s)" % self.index_filename)
             # TODO: somehow prevent a race here
             index_file = open(self.index_filename, 'w')
-            json.dump({ } , index_file)
+            json.dump({}, index_file)
             index_file.close()
         # This should be None except when we are actively working on it and hold a lock
         self.index = None

@@ -14,24 +14,12 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-#import sys
 import tempfile
 import os
 from unittest import TestCase
 from novaimagebuilder.CacheManager import CacheManager
 from tests.MockOS import MockOS
 from tests.MockStackEnvironment import MockStackEnvironment
-
-def setUpModule():
-#    sys.path.append('../novaimagebuilder')
-#    sys.path.append('.')
-#    __import__('StackEnvironment')
-#    __import__('MockStackEnvironment')
-#    sys.modules['StackEnvironment'] = sys.modules.pop('MockStackEnvironment')
-    pass
-
-def tearDownModule():
-    pass
 
 
 class TestCacheManager(TestCase):

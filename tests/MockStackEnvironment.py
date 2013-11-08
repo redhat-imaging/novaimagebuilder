@@ -23,7 +23,6 @@ from MockNovaInstance import MockNovaInstance
 
 
 class MockStackEnvironment(Singleton):
-
     # From http://docs.openstack.org/api/openstack-block-storage/2.0/content/Volumes.html
     # this does not match the docstring in novaimagebuilder.StackEnvironment.get_volume_status()
     VOLUME_STATUS_LIST = ('CREATING',
@@ -81,16 +80,10 @@ class MockStackEnvironment(Singleton):
 
     def upload_image_to_glance(self, name, local_path=None, location=None, format='raw', min_disk=0, min_ram=0,
                                container_format='bare', is_public=True):
-        #self.log.debug("Doing mock glance upload")
-        #self.log.debug("File: (%s) - Name (%s) - Format (%s) - Container (%s)" %
-        #               (local_path, name, format, container_format))
         return uuid.uuid4()
 
     def upload_volume_to_cinder(self, name, volume_size=None, local_path=None, location=None, format='raw',
                                 container_format='bare', is_public=True, keep_image=True):
-        #self.log.debug("Doing mock glance upload and cinder copy")
-        #self.log.debug("File: (%s) - Name (%s) - Format (%s) - Container (%s)" %
-        #               (local_path, name, format, container_format))
         return uuid.uuid4(), uuid.uuid4()
 
     def create_volume_from_image(self, image_id, volume_size=None):
