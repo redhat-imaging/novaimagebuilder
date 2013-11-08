@@ -51,6 +51,8 @@ class CacheManager(Singleton):
         self.env = StackEnvironment.StackEnvironment()
         self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         self.index_filename = self.CACHE_ROOT + self.INDEX_FILE
+        if not os.path.exists(self.CACHE_ROOT):
+            os.makedirs(self.CACHE_ROOT, mode=0755)
         if not os.path.isfile(self.index_filename):
             self.log.debug("Creating cache index file (%s)" % self.index_filename)
             # TODO: somehow prevent a race here
@@ -210,7 +212,7 @@ class CacheManager(Singleton):
                 if pending_countdown == 0:
                     raise Exception("Waited one hour on pending cache fill for version (%s) - object (%s)- giving up" %
                                     ( os_plugin.os_ver_arch(), object_type ) ) 
-                sleep(10)
+                time.sleep(10)
                 continue
 
             # We should never get here
