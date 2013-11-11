@@ -16,16 +16,22 @@
 
 import tempfile
 import os
+import sys
 from unittest import TestCase
-from novaimagebuilder.CacheManager import CacheManager
 from tests.MockOS import MockOS
-from tests.MockStackEnvironment import MockStackEnvironment
+
+# Force CacheManager to use MockStackEnvironment
+import MockStackEnvironment
+sys.modules['StackEnvironment'] = sys.modules.pop('MockStackEnvironment')
+sys.modules['StackEnvironment'].StackEnvironment = sys.modules['StackEnvironment'].MockStackEnvironment
+import StackEnvironment
+import novaimagebuilder.CacheManager
+novaimagebuilder.CacheManager.StackEnvironment = StackEnvironment
 
 
 class TestCacheManager(TestCase):
     def setUp(self):
-        self.cache_mgr = CacheManager()
-        self.cache_mgr.env = MockStackEnvironment()
+        self.cache_mgr = novaimagebuilder.CacheManager.CacheManager()
         self.os_dict = {'shortid': 'mockos'}
         self.install_config = {'arch': 'mockarch'}
         self.os = MockOS(self.os_dict, 'mock-install', 'nowhere', self.install_config)
