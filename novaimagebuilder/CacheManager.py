@@ -75,18 +75,20 @@ class CacheManager(Singleton):
         # We acquire a thread lock under all circumstances
         # This is the safest approach and should be relatively harmless if we are used
         # as a module in a non-threaded Python program
-        self.INDEX_THREAD_LOCK.acquire()
-        # atomic create if not present
-        fd = os.open(self.index_filename, os.O_RDWR | os.O_CREAT)
-        # blocking
-        fcntl.flock(fd, fcntl.LOCK_EX)
-        self.index_file = os.fdopen(fd, "r+")
-        index = self.index_file.read()
-        if len(index) == 0:
-            # Empty - possibly because we created it earlier - create empty dict
-            self.index = { }
+        if self.INDEX_THREAD_LOCK.acquire(False):
+            # atomic create if not present
+            fd = os.open(self.index_filename, os.O_RDWR | os.O_CREAT)
+            # blocking
+            fcntl.flock(fd, fcntl.LOCK_EX)
+            self.index_file = os.fdopen(fd, "r+")
+            index = self.index_file.read()
+            if len(index) == 0:
+                # Empty - possibly because we created it earlier - create empty dict
+                self.index = {}
+            else:
+                self.index = json.loads(index)
         else:
-            self.index = json.loads(index)
+            raise Exception("Failed to acquire threading lock...")
 
     def write_index_and_unlock(self):
         """
