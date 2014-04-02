@@ -21,8 +21,9 @@ from unittest import TestCase
 from tests.MockOS import MockOS
 
 # Force CacheManager to use MockStackEnvironment
+sys.path.append("../")
 import MockStackEnvironment
-sys.modules['StackEnvironment'] = sys.modules.pop('MockStackEnvironment')
+sys.modules['StackEnvironment'] = sys.modules.pop('tests.MockStackEnvironment')
 sys.modules['StackEnvironment'].StackEnvironment = sys.modules['StackEnvironment'].MockStackEnvironment
 import StackEnvironment
 import novaimagebuilder.CacheManager
@@ -49,6 +50,7 @@ class TestCacheManager(TestCase):
         self.cache_mgr.lock_and_get_index()
         self.assertIsNotNone(self.cache_mgr.index)
         self.assertIsInstance(self.cache_mgr.index, dict)
+        self.cache_mgr.unlock_index()
 
     def test_write_index_and_unlock(self):
         self.cache_mgr.lock_and_get_index()
