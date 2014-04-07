@@ -210,7 +210,7 @@ class CacheManager(Singleton):
                 if pending_countdown == 0:
                     raise Exception("Waited one hour on pending cache fill for version (%s) - object (%s)- giving up" %
                                     ( os_plugin.os_ver_arch(), object_type ) ) 
-                sleep(10)
+                time.sleep(10)
                 continue
 
             # We should never get here
