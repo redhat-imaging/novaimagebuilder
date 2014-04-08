@@ -51,11 +51,13 @@ class CacheManager(Singleton):
         self.env = StackEnvironment.StackEnvironment()
         self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         self.index_filename = self.CACHE_ROOT + self.INDEX_FILE
+        if not os.path.exists(self.CACHE_ROOT):
+            os.makedirs(self.CACHE_ROOT, mode=0755)
         if not os.path.isfile(self.index_filename):
             self.log.debug("Creating cache index file (%s)" % self.index_filename)
             # TODO: somehow prevent a race here
             index_file = open(self.index_filename, 'w')
-            json.dump({ } , index_file)
+            json.dump({}, index_file)
             index_file.close()
         # This should be None except when we are actively working on it and hold a lock
         self.index = None
@@ -73,18 +75,20 @@ class CacheManager(Singleton):
         # We acquire a thread lock under all circumstances
         # This is the safest approach and should be relatively harmless if we are used
         # as a module in a non-threaded Python program
-        self.INDEX_THREAD_LOCK.acquire()
-        # atomic create if not present
-        fd = os.open(self.index_filename, os.O_RDWR | os.O_CREAT)
-        # blocking
-        fcntl.flock(fd, fcntl.LOCK_EX)
-        self.index_file = os.fdopen(fd, "r+")
-        index = self.index_file.read()
-        if len(index) == 0:
-            # Empty - possibly because we created it earlier - create empty dict
-            self.index = { }
+        if self.INDEX_THREAD_LOCK.acquire(False):
+            # atomic create if not present
+            fd = os.open(self.index_filename, os.O_RDWR | os.O_CREAT)
+            # blocking
+            fcntl.flock(fd, fcntl.LOCK_EX)
+            self.index_file = os.fdopen(fd, "r+")
+            index = self.index_file.read()
+            if len(index) == 0:
+                # Empty - possibly because we created it earlier - create empty dict
+                self.index = {}
+            else:
+                self.index = json.loads(index)
         else:
-            self.index = json.loads(index)
+            raise Exception("Failed to acquire threading lock...")
 
     def write_index_and_unlock(self):
         """
@@ -210,7 +214,7 @@ class CacheManager(Singleton):
                 if pending_countdown == 0:
                     raise Exception("Waited one hour on pending cache fill for version (%s) - object (%s)- giving up" %
                                     ( os_plugin.os_ver_arch(), object_type ) ) 
-                sleep(10)
+                time.sleep(10)
                 continue
 
             # We should never get here

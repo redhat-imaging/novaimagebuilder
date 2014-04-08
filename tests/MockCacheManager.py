@@ -35,7 +35,8 @@ class MockCacheManager(Singleton):
 
     def _singleton_init(self, *args, **kwargs):
         self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
-        self.index = {}
+        self.index = None
+        self.index_copy = {}
         self.inedx_update = {}
         self.locked = False
 
@@ -51,6 +52,7 @@ class MockCacheManager(Singleton):
             pass  # Should be throwing an exception
         else:
             self.locked = True
+            self.index = self.index_copy
 
     def write_index_and_unlock(self):
         """
@@ -60,7 +62,9 @@ class MockCacheManager(Singleton):
         if self.locked:
             if len(self.index_update) > 0:
                 self.index.update(self.index_update)
+                self.index_copy = self.index
                 self.index_update = {}
+            self.index = None
             self.locked = False
         else:
             pass  # Should throw an exception telling user to lock first
@@ -71,6 +75,7 @@ class MockCacheManager(Singleton):
 
         """
         self.index_update = {}
+        self.index = None
         self.locked = False
 
     def retrieve_and_cache_object(self, object_type, os_plugin, source_url, save_local):

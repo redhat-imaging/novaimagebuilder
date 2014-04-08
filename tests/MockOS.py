@@ -31,8 +31,8 @@ class MockOS(object):
         self.install_config = install_config
         self.install_script = install_script
         self.iso_content_flag = False
-        self.iso_content_dict = {}
-        self.url_content_dict = {}
+        self.iso_content_dict = None
+        self.url_content_dict = None
 
     def os_ver_arch(self):
         return self.osinfo_dict['shortid'] + "-" + self.install_config['arch']
