@@ -18,6 +18,7 @@ import logging
 from OSInfo import OSInfo
 from StackEnvironment import StackEnvironment
 from time import sleep
+import sys
 
 
 class Builder(object):
@@ -99,7 +100,10 @@ class Builder(object):
             if self.os_delegate.iso_volume_delete:
                 self.env.cinder.volumes.get(self.os_delegate.iso_volume).delete()
                 self.log.debug("Deleted install ISO volume from cinder: %s" % self.os_delegate.iso_volume)
-        # Leave instance running if install did not finish
+        # Leave instance running if install did not finish. Exit with code 1.
+        else:
+            sys.exit(1)
+
 
     def _wait_for_shutoff(self, instance, inactivity_timeout):
         inactivity_countdown = inactivity_timeout        
