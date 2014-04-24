@@ -161,7 +161,7 @@ class UbuntuOS(BaseOS):
                  "/install/initrd.gz"}
 
     def url_content_dict(self, architecture='x86_64'):
-        if architexture is 'x86':
+        if architecture is 'x86':
             return { "install-url-kernel":
                      "main/installer-i386/current/images/netboot/ubuntu-installer/i386/linux",
                      "install-url-initrd":
