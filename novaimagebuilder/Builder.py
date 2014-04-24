@@ -116,6 +116,7 @@ class Builder(object):
                 self.log.debug("Waiting for instance status SHUTOFF - current status (%s): %d/1200" % (status, i))
             if not instance.is_active():
                 inactivity_countdown -= 1
+                self.log.debug("Inactivity countdown: %s" % inactivity_countdown)
             else:
                 inactivity_countdown = inactivity_timeout
             if inactivity_countdown == 0:
