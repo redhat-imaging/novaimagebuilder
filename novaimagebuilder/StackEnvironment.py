@@ -277,7 +277,7 @@ class StackEnvironment(Singleton):
                 self._create_blank_image(root_disk_size)
                 if aki and ari and cmdline:
                     root_disk_properties = {'kernel_id': aki, 
-                            'ramdisk_id': ari, 'command_line': cmdline}
+                            'ramdisk_id': ari, 'os_command_line': cmdline}
                 else:
                     root_disk_properties = {}
                 root_disk_image_id = self.upload_image_to_glance(
@@ -477,7 +477,7 @@ class StackEnvironment(Singleton):
         """
         nova_extension_manager = ListExtManager(self.nova)
         for ext in nova_extension_manager.show_all():
-            if ext.name == "VolumeAttachmentUpdate" and ext.is_loaded():
+            if ext.name == "BlockDeviceMappingV2Boot" and ext.is_loaded():
                 return True
         return False
 
@@ -489,6 +489,10 @@ class StackEnvironment(Singleton):
 
         @return: Currently this always returns True.  
         """
+        nova_extension_manager = ListExtManager(self.nova)
+        for ext in nova_extension_manager.show_all():
+            if ext.name == "BlockDeviceMappingV2Boot" and ext.is_loaded():
+                return True
         return False
 
     def is_direct_boot(self):

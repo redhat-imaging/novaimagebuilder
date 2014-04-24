@@ -78,10 +78,12 @@ class NovaInstance:
             # instance is not active (usually before instance finished 
             # spawning.
             return False
-
+        self.log.debug("Disk activity: %s" % current_disk_activity)
+        self.log.debug("Network activity: %s" % current_net_activity)
         if (current_disk_activity == self.last_disk_activity) and \
                 (current_net_activity < (self.last_net_activity + 4096)):
             # if we saw no read or write requests since the last iteration
+            self.last_net_activity = current_net_activity
             return False
         else:
             # if we did see some activity, record it
