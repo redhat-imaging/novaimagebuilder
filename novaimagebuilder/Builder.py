@@ -18,7 +18,6 @@ import logging
 from OSInfo import OSInfo
 from StackEnvironment import StackEnvironment
 from time import sleep
-import sys
 
 
 class Builder(object):
@@ -103,10 +102,7 @@ class Builder(object):
             return finished_image_id
         # Leave instance running if install did not finish. Exit with code 1.
         else:
-            #TODO: Fix this so that it works both for the command and module use cases.
-            sys.exit(1)
             return None
-
 
     def _wait_for_shutoff(self, instance, inactivity_timeout):
         inactivity_countdown = inactivity_timeout        
