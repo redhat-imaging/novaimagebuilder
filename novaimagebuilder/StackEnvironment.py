@@ -142,6 +142,13 @@ class StackEnvironment(Singleton):
         self.log.debug("Finished uploading to Glance")
         return image.id
 
+    def download_image_from_glance(self, image_id):
+        image = self.glance.images.get(image_id)
+        with open('/tmp/%s.iso' % image_id, 'wb') as image_file:
+            for chunk in image.data:
+                image_file.write(chunk)
+        return image_file
+
     def upload_volume_to_cinder(self, name, volume_size=None, local_path=None,
             location=None, format='raw', container_format='bare',
             is_public=True, keep_image=True):

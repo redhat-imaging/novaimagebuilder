@@ -88,7 +88,7 @@ class Builder(object):
 
         @param inactivity_timeout amount of time to wait for activity before declaring the installation a failure in 10s of seconds (6 is 60 seconds)
 
-        @return: Success or Failure
+        @return: image id or None
         """
         # TODO: Timeouts, activity checking
         instance = self._wait_for_shutoff(self.os_delegate.install_instance, inactivity_timeout)
@@ -100,9 +100,12 @@ class Builder(object):
             if self.os_delegate.iso_volume_delete:
                 self.env.cinder.volumes.get(self.os_delegate.iso_volume).delete()
                 self.log.debug("Deleted install ISO volume from cinder: %s" % self.os_delegate.iso_volume)
+            return finished_image_id
         # Leave instance running if install did not finish. Exit with code 1.
         else:
+            #TODO: Fix this so that it works both for the command and module use cases.
             sys.exit(1)
+            return None
 
 
     def _wait_for_shutoff(self, instance, inactivity_timeout):
