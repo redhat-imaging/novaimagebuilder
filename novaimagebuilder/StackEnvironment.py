@@ -24,7 +24,7 @@ from novaclient.v1_1.contrib.list_extensions import ListExtManager
 import os
 from NovaInstance import NovaInstance
 import logging
-
+from tempfile import NamedTemporaryFile
 
 class StackEnvironment(Singleton):
 
@@ -143,9 +143,9 @@ class StackEnvironment(Singleton):
         return image.id
 
     def download_image_from_glance(self, image_id):
-        image = self.glance.images.get(image_id)
-        with open('/tmp/%s.iso' % image_id, 'wb') as image_file:
-            for chunk in image.data:
+        glance_obj = self.glance.images.get(image_id)
+        with NamedTemporaryFile() as image_file:
+            for chunk in glance_obj.data:
                 image_file.write(chunk)
         return image_file
 
