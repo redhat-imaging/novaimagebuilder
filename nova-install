@@ -61,6 +61,8 @@ class Arguments(Singleton):
 
         argparser.add_argument('--debug', action='store_true', default=False,
                                help='Print debugging output to the logfile. (default: %(default)s)')
+        argparser.add_argument('--direct_boot', action='store_true', default=False,
+                               help='Provide kernel command line at launch of instance.  Instead of building a syslinux image. (default: %(default)s)')
 
         return argparser
 
@@ -116,7 +118,8 @@ class Application(Singleton):
                               'disk_size': self.arguments.disk_size,
                               'flavor': self.arguments.instance_flavor,
                               'storage': self.arguments.image_storage,
-                              'name': self.arguments.name}
+                              'name': self.arguments.name,
+                              'direct_boot': self.arguments.direct_boot}
 
             self.builder = Builder(self.arguments.os,
                                    install_location=location,

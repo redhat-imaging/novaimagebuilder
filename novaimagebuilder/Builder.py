@@ -60,7 +60,6 @@ class Builder(object):
             try:
                 os_module = __import__("novaimagebuilder." + os_classname, fromlist=[os_classname])
                 os_class = getattr(os_module, os_classname)
-                #import pdb; pdb.set_trace()
                 return os_class(osinfo_dict=self.os,
                                 install_type=self.install_type,
                                 install_media_location=self.install_location,

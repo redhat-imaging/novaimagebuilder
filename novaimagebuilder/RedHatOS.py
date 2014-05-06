@@ -22,10 +22,8 @@ class RedHatOS(BaseOS):
     def __init__(self, osinfo_dict, install_type, install_media_location, install_config, install_script = None):
         super(RedHatOS, self).__init__(osinfo_dict, install_type, install_media_location, install_config, install_script)
 
-        #TODO: Check for direct boot - for now we are using environments
-        #      where we know it is present
-        #if not self.env.is_direct_boot():
-        #    raise Exception("Direct Boot feature required - Installs using syslinux stub not yet implemented")
+        # NOTE: (dkliban) We can't probe Nova to determine presence of direct boot 
+        # so user must use --direct_boot option to take advantage of the  option
 
         if install_type == "iso" and not self.env.is_cdrom():
             raise Exception("ISO installs require a Nova environment that can \
@@ -56,7 +54,7 @@ class RedHatOS(BaseOS):
         self.cmdline = "ks=http://169.254.169.254/latest/user-data"
 
         #If direct boot option is available, prepare kernel and ramdisk
-        if self.env.is_direct_boot():
+        if self.install_config['direct_boot']:
             if self.install_type == "iso":
                 iso_locations = self.cache.retrieve_and_cache_object(
                         "install-iso", self, self.install_media_location, True)
@@ -77,11 +75,11 @@ class RedHatOS(BaseOS):
                         "install-url-kernel", self, kernel_location, 
                         True)['glance']
                 self.tree_ari = self.cache.retrieve_and_cache_object(
-                        "install-url-kernel", self, ramdisk_location, 
+                        "install-url-initrd", self, ramdisk_location,
                         True)['glance']
                 self.log.debug ("Prepared cinder aki (%s) and ari (%s) for \
-                        install instance" % (self.iso_volume, self.iso_aki, 
-                            self.iso_ari)) 
+                        install instance" % (self.tree_aki,
+                            self.tree_ari))
 
         #Else, download kernel and ramdisk and prepare syslinux image with the two
         else:
@@ -118,20 +116,21 @@ class RedHatOS(BaseOS):
 
 
     def start_install_instance(self):
-        if self.env.is_direct_boot():
+        if self.install_config['direct_boot']:
             self.log.debug("Launching direct boot ISO install instance")
             if self.install_type == "iso":
                 self.install_instance = self.env.launch_instance(
                         root_disk=('blank', 10), 
                         install_iso=('cinder', self.iso_volume),
                         aki=self.iso_aki, ari=self.iso_ari, 
-                        cmdline=self.cmdline, userdata=self.install_script)
+                        cmdline=self.cmdline, userdata=self.install_script,
+                        direct_boot=True)
 
             if self.install_type == "tree":
                 self.install_instance = self.env.launch_instance(
-                        root_disk=('blank', 10), aki=self.iso_aki, 
-                        ari=self.iso_ari, cmdline=self.cmdline, 
-                        userdata=self.install_script)
+                        root_disk=('blank', 10), aki=self.tree_aki,
+                        ari=self.tree_ari, cmdline=self.cmdline,
+                        userdata=self.install_script, direct_boot=True)
 
         else:
             if self.install_type == "tree":
