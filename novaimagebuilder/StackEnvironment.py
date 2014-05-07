@@ -24,7 +24,7 @@ from novaclient.v1_1.contrib.list_extensions import ListExtManager
 import os
 from NovaInstance import NovaInstance
 import logging
-
+from tempfile import NamedTemporaryFile
 
 class StackEnvironment(Singleton):
 
@@ -141,6 +141,13 @@ class StackEnvironment(Singleton):
             sleep(1)
         self.log.debug("Finished uploading to Glance")
         return image.id
+
+    def download_image_from_glance(self, image_id):
+        glance_obj = self.glance.images.get(image_id)
+        with NamedTemporaryFile() as image_file:
+            for chunk in glance_obj.data:
+                image_file.write(chunk)
+        return image_file
 
     def upload_volume_to_cinder(self, name, volume_size=None, local_path=None,
             location=None, format='raw', container_format='bare',

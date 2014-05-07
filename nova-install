@@ -127,7 +127,8 @@ class Application(Singleton):
             # TODO: create a better way to run this.
             # The inactivity timeout is 180 seconds
             self.builder.run()
-            self.builder.wait_for_completion(180)
+            if not self.builder.wait_for_completion(180):
+                sys.exit(1)
 
         elif self.arguments.os_list:
             # possible distro values from libosinfo (for reference):
