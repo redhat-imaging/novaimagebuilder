@@ -22,10 +22,8 @@ class UbuntuOS(BaseOS):
     def __init__(self, osinfo_dict, install_type, install_media_location, install_config, install_script = None):
         super(UbuntuOS, self).__init__(osinfo_dict, install_type, install_media_location, install_config, install_script)
 
-        #TODO: Check for direct boot - for now we are using environments
-        #      where we know it is present
-        #if not self.env.is_direct_boot():
-        #    raise Exception("Direct Boot feature required - Installs using syslinux stub not yet implemented")
+        # NOTE: (dkliban) We can't probe Nova to determine presence of direct boot 
+        # so user must use --direct_boot option to take advantage of the  option
 
         if install_type == "iso" and not self.env.is_cdrom():
             raise Exception("ISO installs require a Nova environment that can \
@@ -60,7 +58,7 @@ class UbuntuOS(BaseOS):
         priority=critical --"
 
         #If direct boot option is available, prepare kernel and ramdisk
-        if self.env.is_direct_boot():
+        if self.install_config['direct_boot']:
             if self.install_type == "iso":
                 iso_locations = self.cache.retrieve_and_cache_object(
                         "install-iso", self, self.install_media_location, True)
@@ -122,7 +120,7 @@ class UbuntuOS(BaseOS):
 
 
     def start_install_instance(self):
-        if self.env.is_direct_boot():
+        if self.install_config['direct_boot']:
             self.log.debug("Launching direct boot ISO install instance")
             if self.install_type == "iso":
                 self.install_instance = self.env.launch_instance(
