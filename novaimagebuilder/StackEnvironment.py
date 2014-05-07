@@ -292,6 +292,7 @@ class StackEnvironment(Singleton):
             else:
                 raise Exception("Boot disk must be of type 'blank' or 'glance'")
 
+        install_iso_id = None
         if install_iso:
             if install_iso[0] == 'cinder':
                 install_iso_id = install_iso[1]
