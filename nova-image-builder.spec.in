@@ -7,6 +7,11 @@ License: ASL 2.0
 Group: Applications/System
 URL: https://github.com/redhat-imaging/novaimagebuilder
 BuildArch: noarch
+Requires: python-libguestfs
+Requires: python-glanceclient
+Requires: python-keystoneclient
+Requires: python-cinderclient
+Requires: python-novaclient
 Requires: python-argparse
 Requires(post): chkconfig
 Requires(preun): chkconfig
