@@ -1,0 +1,48 @@
+Summary: OpenStack Nova image generation tool
+Name: nova-image-builder
+Version: @VERSION@
+Release: @RELEASE@%{?dist}
+Source0: http://repos.fedorapeople.org/repos/aeolus/nova-image-builder/%{version}/tarball/%{name}-%{version}.tar.gz
+License: ASL 2.0
+Group: Applications/System
+URL: https://github.com/redhat-imaging/novaimagebuilder
+BuildArch: noarch
+Requires: python-libguestfs
+Requires: python-glanceclient
+Requires: python-keystoneclient
+Requires: python-cinderclient
+Requires: python-novaclient
+Requires: python-argparse
+Requires(post): chkconfig
+Requires(preun): chkconfig
+BuildRequires: python2
+BuildRequires: python-setuptools
+
+%description
+nova-image-builder allows you to create OpenStack images from scratch by running
+native OS installers inside of Nova and saving th results
+
+
+%prep
+%setup -q
+
+%build
+python setup.py build
+
+%install
+python setup.py install -O1 --root=%{buildroot} --skip-build
+
+%{__install} -d %{buildroot}/%{_localstatedir}/lib/novaimagebuilder
+
+#sed -i '/\/usr\/bin\/env python/d' %{buildroot}/%{python_sitelib}/nova-image-builder/*.py
+
+%files
+%doc COPYING
+%dir %attr(0755, root, root) %{_localstatedir}/lib/novaimagebuilder
+%{python_sitelib}/nova_image_builder-*.egg-info
+%{python_sitelib}/novaimagebuilder/*.py*
+%{_bindir}/nova-install
+
+%changelog
+* Fri May 09 2014 Ian McLeod <imcleod@redhat.com> - 0.0.1-0
+- Initial spec file
