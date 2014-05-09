@@ -255,7 +255,7 @@ class StackEnvironment(Singleton):
 
     def launch_instance(self, root_disk=None, install_iso=None, 
             secondary_iso=None, floppy=None, aki=None, ari=None, cmdline=None,
-            userdata=None):
+            userdata=None, direct_boot=False):
         """
 
         @param root_disk: tuple where first element is 'blank', 'cinder', or
@@ -274,6 +274,8 @@ class StackEnvironment(Singleton):
         @param ari: glance image id for ramdisk
         @param cmdline: string command line argument for anaconda
         @param userdata: string containing kickstart file or preseed file
+        @param direct_boot: boolean denoting whether kernel command line can be
+        specified as property of glance image
         @return: NovaInstance launched @raise Exception:
         """
         if root_disk:
@@ -297,6 +299,7 @@ class StackEnvironment(Singleton):
             else:
                 raise Exception("Boot disk must be of type 'blank' or 'glance'")
 
+        install_iso_id = None
         if install_iso:
             if install_iso[0] == 'cinder':
                 install_iso_id = install_iso[1]
@@ -322,7 +325,7 @@ class StackEnvironment(Singleton):
                 raise Exception("Floppy must be of type 'cinder' or 'glance'")
 
         # if direct boot is not available (Havana):
-        if not self.is_direct_boot():
+        if not direct_boot:
             instance = None
             # 0 crdom drives are needed
             if not install_iso and not secondary_iso and not floppy:
@@ -500,14 +503,4 @@ class StackEnvironment(Singleton):
         for ext in nova_extension_manager.show_all():
             if ext.name == "BlockDeviceMappingV2Boot" and ext.is_loaded():
                 return True
-        return False
-
-    def is_direct_boot(self):
-        #TODO: check if direct boot is available
-        """
-        Checks if nova allows booting an instance with a command line argument
-        This will not be available until Icehouse
-
-        @return: Currently this always returns False
-        """
         return False
