@@ -239,6 +239,7 @@ class StackEnvironment(Singleton):
         return image.status
 
     def _create_blank_image(self, size):
+        #TODO(dkliban): Store blank image in cache.
         blank_image_file = NamedTemporaryFile()
         blank_image_name = blank_image_file.name
         blank_image_file.close()
