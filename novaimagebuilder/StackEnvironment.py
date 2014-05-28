@@ -239,15 +239,19 @@ class StackEnvironment(Singleton):
         return image.status
 
     def _create_blank_image(self, size):
-        rc = os.system("qemu-img create -f qcow2 blank_image.tmp %dG" % size)
+        blank_image_file = NamedTemporaryFile()
+        blank_image_name = blank_image_file.name
+        blank_image_file.close()
+        rc = os.system("qemu-img create -f qcow2 %s %dG" %
+                blank_image_name, size)
         if rc == 0:
-            return
+            return blank_image_name
         else:
             raise Exception("Unable to create blank image")
 
 
-    def _remove_blank_image(self):
-        rc = os.system("rm blank_image.tmp")
+    def _remove_blank_image(self, blank_image_name):
+        rc = os.system("rm %s" % blank_image_name)
         if rc == 0:
             return
         else:
@@ -283,7 +287,7 @@ class StackEnvironment(Singleton):
             if root_disk[0] == 'blank':
                 root_disk_size = root_disk[1]
                 #Create a blank qcow2 image and uploads it
-                self._create_blank_image(root_disk_size)
+                blank_image_name = self._create_blank_image(root_disk_size)
                 if aki and ari and cmdline:
                     root_disk_properties = {'kernel_id': aki, 
                             'ramdisk_id': ari, 'os_command_line': cmdline}
@@ -291,9 +295,9 @@ class StackEnvironment(Singleton):
                     root_disk_properties = {}
                 root_disk_image_id = self.upload_image_to_glance(
                         'blank %dG disk' % root_disk_size, 
-                        local_path='./blank_image.tmp', format='qcow2',
+                        local_path=blank_image_name, format='qcow2',
                         properties=root_disk_properties)
-                self._remove_blank_image()
+                self._remove_blank_image(blank_image_name)
             elif root_disk[0] == 'glance':
                 root_disk_image_id = root_disk[1]
             else:
