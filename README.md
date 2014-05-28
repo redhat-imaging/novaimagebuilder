@@ -1,7 +1,7 @@
 Building OS images in NOVA
 ==========================
 
-This is an early demonstration of a new image building approach for OpenStack.
+This is a new image building approach for OpenStack.
 
 It is a command line tool that builds working OpenStack images by
 running Anaconda or other native installers within Nova.  In its simplest form 
@@ -12,43 +12,74 @@ Early discussion of this approach can be found here:
 
 https://wiki.openstack.org/wiki/NovaImageBuilding
 
-It has been developed and tested on RHEL6 and the Folsom OpenStack release installed
-using packstack.  However, it should work with newer host OSes and newer OpenStack releases.
+It has been developed and tested on RHEL6 against Folsom, Havana and Icehouse OpenStack
+releases.  However, it should work with newer host OSes and newer OpenStack releases.
 
 To try it out install the requirements listed below then run commands like this:
 
-(substituting the details of your own OpenStack environment where indicated)
+You can either source your keystonerc file or provide your OpenStack environment variables
+on command line.
 
+Sample keystone.rc:
+
+    export OS_TENANT_NAME=admin;export OS_USERNAME=admin;export OS_PASSWORD=admin;
+    export OS_AUTH_URL=http://10.10.10.10:5000/v2.0/;export OS_AUTH_STRATEGY=keystone
+
+optional arguments:
+
+    -h, --help            show this help message and exit
+    --os OS               The shortid of an OS. Required for both installation
+                          types.
+    --os_list             Show the OS list available for image building.
+    --install_iso INSTALL_ISO
+                          Location of the installation media ISO.
+    --install_tree INSTALL_TREE
+                          Location of an installation file tree.
+    --install_script INSTALL_SCRIPT
+                          Custom install script file to use instead of
+                          generating one.
+    --admin_pw ADMIN_PW   The password to set for the admin user in the image.
+    --license_key LICENSE_KEY
+                          License/product key to use if needed.
+    --arch ARCH           The architecture the image is built for. (default:
+                          x86_64)
+    --disk_size DISK_SIZE
+                          Size of the image root disk in gigabytes. (default:
+                          10)
+    --instance_flavor INSTANCE_FLAVOR
+                          The type of instance to use for building the image.
+                          (default: vanilla)
+    --name NAME           A name to assign to the built image.
+    --image_storage {glance,cinder,both}
+                          Where to store the final image: glance, cinder, both
+                          (default: glance)
+    --debug               Print debugging output to the logfile. (default:
+                          False)
+    --direct_boot         Provide kernel command line at launch of instance.
+                          Instead of building a syslinux image. (default: False)
 
 #### Create a Fedora 18 JEOS image in glance using a network install
 
-    ./create_image.py --username admin --tenant admin --password password --auth-url http://10.10.10.10:5000/v2.0 \
-                      --glance-url http://10.10.10.10:9292/ --root-password myrootpw install_scripts/fedora-18-jeos.ks
+    ./nova-install --name fedora19-image --os fedora19 --install_tree http://download.devel.redhat.com/released/F-19/GOLD/Fedora/x86_64/os/ --install_script ./fedora19.ks
 
 #### Create an Ubuntu 12.04 image in glance using a network install
 
-    ./create_image.py --username admin --tenant admin --password password --auth-url http://10.10.10.10:5000/v2.0 \
-                      --glance-url http://10.10.10.10:9292/ --root-password myrootpw \
-                        install_scripts/ubuntu-12.04-jeos.preseed
+    ./nova-install --name ubuntu-demo-image --os ubuntu12.04 --install_tree http://us.archive.ubuntu.com/ubuntu/dists/precise/ --install_script ./ubuntu12.04.preseed
 
 #### Create a Fedora 18 JEOS image as a volume snapshot using a network install
 
-    ./create_image.py --username admin --tenant admin --password password --auth-url http://10.10.10.10:5000/v2.0 \
+    ./nova-install --username admin --tenant admin --password password --auth-url http://10.10.10.10:5000/v2.0 \
                       --glance-url http://10.10.10.10:9292/ --root-password myrootpw --create-volume \
                         install_scripts/fedora-18-jeos.ks
+    ./nova-install --image_storage cinder --name fedora19-image --os fedora19 --install_tree http://download.devel.redhat.com/released/F-19/GOLD/Fedora/x86_64/os/ --install_script ./fedora19.ks
 
 #### Create a Fedora 18 JEOS image as a volume snapshot using an install DVD pulled from a Fedora mirror
 
-    ./create_image.py --username admin --tenant admin --password password --auth-url http://10.10.10.10:5000/v2.0 \
-                      --create-volume --install-media-url \
-                        http://mirror.pnl.gov/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso \
-                      --install-tree-url \
-                        http://mirror.pnl.gov/fedora/linux/releases/18/Fedora/x86_64/os/ \
-                      --glance-url http://10.10.10.10:9292/ --root-password myrootpw install_scripts/fedora-18-jeos-DVD.ks
+     ./nova-install --name fedora18-image --os fedora18 --install_iso http://mirror.pnl.gov/fedora/linux/releases/18/Fedora/x86_64/iso/Fedora-18-x86_64-DVD.iso --install_script ./fedora18-DVD.ks
 
 #### Create a Fedora 18 JEOS image as a volume snapshot by re-using the DVD volume snapshot created above
 
-    ./create_image.py --username admin --tenant admin --password password --auth-url http://10.10.10.10:5000/v2.0 \
+    ./nova-install --username admin --tenant admin --password password --auth-url http://10.10.10.10:5000/v2.0 \
                       --create-volume --install-media-snapshot <SNAPSHOT_ID_REPORTED_ABOVE> \
                       --install-tree-url \
                         http://mirror.pnl.gov/fedora/linux/releases/18/Fedora/x86_64/os/ \
