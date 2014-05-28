@@ -243,7 +243,7 @@ class StackEnvironment(Singleton):
         blank_image_name = blank_image_file.name
         blank_image_file.close()
         rc = os.system("qemu-img create -f qcow2 %s %dG" %
-                blank_image_name, size)
+                (blank_image_name, size))
         if rc == 0:
             return blank_image_name
         else:
