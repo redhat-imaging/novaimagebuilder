@@ -79,11 +79,11 @@ class UbuntuOS(BaseOS):
                         "install-url-kernel", self, kernel_location, 
                         True)['glance']
                 self.tree_ari = self.cache.retrieve_and_cache_object(
-                        "install-url-kernel", self, ramdisk_location, 
+                        "install-url-initrd", self, ramdisk_location,
                         True)['glance']
                 self.log.debug ("Prepared cinder aki (%s) and ari (%s) for \
-                        install instance" % (self.iso_volume, self.iso_aki, 
-                            self.iso_ari)) 
+                        install instance" % (self.tree_aki,
+                            self.tree_ari))
 
         #Else, download kernel and ramdisk and prepare syslinux image with the two
         else:
@@ -127,13 +127,14 @@ class UbuntuOS(BaseOS):
                         root_disk=('blank', 10), 
                         install_iso=('cinder', self.iso_volume),
                         aki=self.iso_aki, ari=self.iso_ari, 
-                        cmdline=self.cmdline, userdata=self.install_script)
+                        cmdline=self.cmdline, userdata=self.install_script,
+                        direct_boot=True)
 
             if self.install_type == "tree":
                 self.install_instance = self.env.launch_instance(
-                        root_disk=('blank', 10), aki=self.iso_aki, 
-                        ari=self.iso_ari, cmdline=self.cmdline, 
-                        userdata=self.install_script)
+                        root_disk=('blank', 10), aki=self.tree_aki,
+                        ari=self.tree_ari, cmdline=self.cmdline,
+                        userdata=self.install_script, direct_boot=True)
 
         else:
             if self.install_type == "tree":
