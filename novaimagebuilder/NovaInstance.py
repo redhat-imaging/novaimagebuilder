@@ -25,6 +25,7 @@ class NovaInstance:
         self.last_net_activity = 0
         self.instance = instance
         self.stack_env = stack_env
+        self.floating_ips = []
     
     @property
     def id(self):
@@ -90,3 +91,24 @@ class NovaInstance:
             self.last_disk_activity = current_disk_activity
             self.last_net_activity = current_net_activity
             return True
+
+    def add_floating_ip(self):
+        """
+        Add a floating IP address to the instance.
+
+        @return: floating_ip: A new floating IP object from Nova.
+        """
+        new_ip = self.stack_env.nova.floating_ips.create()
+        self.instance.add_floating_ip(new_ip)
+        self.floating_ips.append(new_ip)
+        return new_ip
+
+    def remove_floating_ip(self, ip_addr):
+        """
+        Remove a floating IP address from the instance.
+
+        @param ip_addr: floating_ip: The floating IP object to remove.
+        """
+        self.floating_ips.remove(ip_addr)
+        self.instance.remove_floating_ip(ip_addr)
+        self.stack_env.nova.floating_ips.delete(ip_addr)
