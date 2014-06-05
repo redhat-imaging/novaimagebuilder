@@ -17,7 +17,14 @@
 import logging
 from time import sleep
 
-class NovaInstance:
+
+class NovaInstance(object):
+    """
+    A wrapper class for server objects in OpenStack Nova.
+
+    @param instance: The OpenStack Nova server to wrap.
+    @param stack_env: An instance of novaimagebuilder.StackEnvironment to use for communication with OpenStack
+    """
 
     def __init__(self, instance, stack_env):
         self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
@@ -30,27 +37,26 @@ class NovaInstance:
     @property
     def id(self):
         """
+        The nova server id of the instance.
 
-
-        @return:
+        @return: id string from nova
         """
         return self.instance.id
 
     @property
     def status(self):
         """
+        The nova server status of the instance.
 
-
-        @return:
+        @return: status string from nova
         """
-        self.instance = self.stack_env.nova.servers.get(self.instance.id)
         return self.instance.status
 
     def get_disk_and_net_activity(self):
         """
+        Returns a total count for each of disk and network activity.
 
-
-        @return:
+        @return: disk_activity int, net_activity int
         """
         disk_activity = 0
         net_activity = 0
@@ -66,9 +72,9 @@ class NovaInstance:
 
     def is_active(self):
         """
+        Determines if server instance is working or hung on an error based on disk and network activity.
 
-        @param inactivity_timeout:
-        @return:
+        @return: boolean
         """
         self.log.debug("checking for inactivity")
         try:
@@ -96,7 +102,7 @@ class NovaInstance:
         """
         Add a floating IP address to the instance.
 
-        @return: floating_ip: A new floating IP object from Nova.
+        @return: floating_ip: A new FloatingIP object from Nova.
         """
         new_ip = self.stack_env.nova.floating_ips.create()
         self.instance.add_floating_ip(new_ip)
@@ -107,8 +113,91 @@ class NovaInstance:
         """
         Remove a floating IP address from the instance.
 
-        @param ip_addr: floating_ip: The floating IP object to remove.
+        @param ip_addr: The FloatingIP object to remove.
         """
         self.floating_ips.remove(ip_addr)
         self.instance.remove_floating_ip(ip_addr)
         self.stack_env.nova.floating_ips.delete(ip_addr)
+
+    def shutoff(self, timeout=180, in_progress=False):
+        """
+        Stop the instance in Nova.
+
+        @param timeout: Number of seconds to wait before giving up
+        @param in_progress: boolean If set to True, shutoff will only monitor the instance for SHUTOFF state instead of
+         initiating the shutdown. (Default: False)
+        @return: boolean
+        """
+        if not in_progress:
+            self.instance.stop()
+
+        _timeout = timeout
+        count = 1200
+        for index in range(count):
+            _status = self.status
+            if _status == 'SHUTOFF':
+                self.log.debug('Instance (%s) has entered SHUTOFF state' % self.id)
+                return True
+            if index % 10 == 0:
+                self.log.debug('Waiting for instance status SHUTOFF - current status (%s): %d/%d' % (_status, index, count))
+            if not self.is_active():
+                _timeout -= 1
+            else:
+                _timeout = timeout
+            if _timeout == 0:
+                self.log.debug('Instance has become inactive but running. Please investigate the actual nova instance.')
+                return False
+            sleep(1)
+
+    def terminate(self):
+        """
+        Stop and delete the instance from Nova.
+
+        """
+        _id = self.id
+        self.instance.delete()
+        self.log.debug('Waiting for instance (%s) to be terminated.' % _id)
+
+        try:
+            _instance = self.stack_env.nova.servers.get(_id)
+            while _instance:
+                self.log.debug('Nova instance %s has status %s...' % (_id, self.status))
+                sleep(5)
+                _instance = self.stack_env.nova.servers.get(_id)
+        except Exception:
+            self.log.debug('Nova instance %s deleted.' % _id)
+
+    def create_snapshot(self, image_name, with_properties=None, strip_direct_boot=True):
+        """
+        Create a snapshot image based on this Nova instance.
+
+        @param image_name: str Name of the new image snapshot.
+        @param with_properties: dict Optional metadata that should be added to the snapshot image.
+        @param strip_direct_boot: boolean Should direct boot parameters be stripped if present? (Default: True)
+        @raise Exception: When the snapshot reaches 'error' instead of 'active' status.
+        @return Glance id of the snapshot image
+        """
+        snapshot_id = self.instance.create_image(image_name)
+        self.log.debug('Waiting for glance image id (%s) to become active' % snapshot_id)
+        snapshot = self.stack_env.glance.images.get(snapshot_id)
+        while snapshot:
+            sleep(2)
+            snapshot_status = snapshot.status
+            self.log.debug('Current image status: %s' % snapshot_status)
+            if snapshot_status == 'error':
+                raise Exception('Image entered error status while waiting for completion')
+            elif snapshot_status == 'active':
+                break
+
+        if with_properties or strip_direct_boot:
+            snapshot_properties = snapshot.properties
+            if strip_direct_boot:
+                for key in ('kernel_id', 'ramdisk_id', 'command_line'):
+                    if key in snapshot_properties:
+                        del snapshot_properties[key]
+                metadata = {'properties': snapshot_properties}
+                snapshot.update(**metadata)
+            if isinstance(with_properties, dict):
+                snapshot.update(**with_properties)
+
+        return snapshot_id

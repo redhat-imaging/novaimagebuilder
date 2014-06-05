@@ -73,12 +73,9 @@ class Builder(object):
     def run(self):
         """
         Starts the installation of an OS in an image via the appropriate OS class
-
-        @return: Status of the installation.
         """
         self.os_delegate.prepare_install_instance()
         self.os_delegate.start_install_instance()
-        return self.os_delegate.update_status()
 
     def wait_for_completion(self, inactivity_timeout):
         """
@@ -89,12 +86,10 @@ class Builder(object):
         @return: image id or None
         """
         # TODO: Timeouts, activity checking
-        instance = self._wait_for_shutoff(self.os_delegate.install_instance, inactivity_timeout)
-        # Snapshot with self.install_config['name']
-        if instance:
-            finished_image_id = instance.instance.create_image(self.install_config['name'])
-            self._wait_for_glance_snapshot(finished_image_id)
-            self._terminate_instance(instance.id)
+        instance = self.os_delegate.install_instance
+        if instance.shutoff(timeout=inactivity_timeout, in_progress=True):
+            finished_image_id = instance.create_snapshot(self.install_config['name'])
+            instance.terminate()
             if self.os_delegate.iso_volume_delete:
                 self.env.cinder.volumes.get(self.os_delegate.iso_volume).delete()
                 self.log.debug("Deleted install ISO volume from cinder: %s" % self.os_delegate.iso_volume)
@@ -102,59 +97,6 @@ class Builder(object):
         # Leave instance running if install did not finish. Exit with code 1.
         else:
             return None
-
-    def _wait_for_shutoff(self, instance, inactivity_timeout):
-        inactivity_countdown = inactivity_timeout        
-        for i in range(1200):
-            status = instance.status
-            if status == "SHUTOFF":
-                self.log.debug("Instance (%s) has entered SHUTOFF state" % instance.id)
-                return instance
-            if i % 10 == 0:
-                self.log.debug("Waiting for instance status SHUTOFF - current status (%s): %d/1200" % (status, i))
-            if not instance.is_active():
-                inactivity_countdown -= 1
-                self.log.debug("Inactivity countdown: %s" % inactivity_countdown)
-            else:
-                inactivity_countdown = inactivity_timeout
-            if inactivity_countdown == 0:
-                self.log.debug("Install instance has become inactive.  Instance will remain running so you can investigate what happened.")
-                return
-            sleep(1)
-
-
-    def _wait_for_glance_snapshot(self, image_id):
-        image = self.env.glance.images.get(image_id)
-        self.log.debug("Waiting for glance image id (%s) to become active" % image_id)
-        while True:
-            self.log.debug("Current image status: %s" % image.status)
-            sleep(2)
-            image = self.env.glance.images.get(image.id)
-            if image.status == "error":
-                raise Exception("Image entered error status while waiting for completion")
-            elif image.status == 'active':
-                break
-            # Remove any direct boot properties if they exist
-            properties = image.properties
-        for key in ['kernel_id', 'ramdisk_id', 'os_command_line']:
-            if key in properties:
-                del properties[key]
-            meta = {'properties': properties}
-            image.update(**meta)
-
-    def _terminate_instance(self, instance_id):
-        nova = self.env.nova
-        instance = nova.servers.get(instance_id)
-        instance.delete()
-        self.log.debug("Waiting for instance id (%s) to be terminated/delete" % instance_id)
-        while True:
-            self.log.debug("Current instance status: %s" % instance.status)
-            sleep(5)
-            try:
-                instance = nova.servers.get(instance_id)
-            except Exception as e:
-                self.log.debug("Got exception (%s) assuming deletion complete" % e)
-                break
 
     def abort(self):
         """
