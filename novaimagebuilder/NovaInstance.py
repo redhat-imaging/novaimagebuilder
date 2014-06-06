@@ -50,6 +50,7 @@ class NovaInstance(object):
 
         @return: status string from nova
         """
+        self.instance = self.stack_env.nova.servers.get(self.instance.id)
         return self.instance.status
 
     def get_disk_and_net_activity(self):
