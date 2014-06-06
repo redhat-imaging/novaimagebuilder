@@ -182,13 +182,13 @@ class NovaInstance(object):
         self.log.debug('Waiting for glance image id (%s) to become active' % snapshot_id)
         snapshot = self.stack_env.glance.images.get(snapshot_id)
         while snapshot:
-            sleep(2)
-            snapshot_status = snapshot.status
-            self.log.debug('Current image status: %s' % snapshot_status)
-            if snapshot_status == 'error':
+            self.log.debug('Current image status: %s' % snapshot.status)
+            if snapshot.status == 'error':
                 raise Exception('Image entered error status while waiting for completion')
-            elif snapshot_status == 'active':
+            elif snapshot.status == 'active':
                 break
+            sleep(2)
+            snapshot = self.stack_env.glance.images.get(snapshot_id)
 
         if with_properties or strip_direct_boot:
             snapshot_properties = snapshot.properties
