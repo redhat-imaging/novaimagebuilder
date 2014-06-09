@@ -26,6 +26,7 @@ from NovaInstance import NovaInstance
 import logging
 from tempfile import NamedTemporaryFile
 
+
 class StackEnvironment(Singleton):
 
     """
@@ -42,26 +43,22 @@ class StackEnvironment(Singleton):
             tenant = os.environ['OS_TENANT_NAME']
             auth_url = os.environ['OS_AUTH_URL']
         except Exception, e:
-            raise Exception("Unable to retrieve auth info from environment \
-                    variables. exception: %s" % e.message)
+            raise Exception("Unable to retrieve auth info from environment variables. exception: %s" % e.message)
 
         try:
-            self.keystone = keystone_client.Client(username=username,
-                    password=password, tenant_name=tenant, auth_url=auth_url)
+            self.keystone = keystone_client.Client(username=username,  password=password, tenant_name=tenant,
+                                                   auth_url=auth_url)
             self.keystone.authenticate()
         except Exception, e:
-            raise Exception('Error authenticating with keystone. Original \
-                    exception: %s' % e.message)
+            raise Exception('Error authenticating with keystone. Original exception: %s' % e.message)
         try:
-            self.nova = nova_client.Client(username, password, tenant,
-                    auth_url=auth_url, insecure=True)
+            self.nova = nova_client.Client(username, password, tenant, auth_url=auth_url, insecure=True)
         except Exception, e:
             raise Exception('Error connecting to Nova.  Nova is required for \
                     building images. Original exception: %s' % e.message)
         try:
             glance_url = self.keystone.service_catalog.get_endpoints()['image'][0]['adminURL']
-            self.glance = glance_client.Client('1', endpoint=glance_url,
-                    token=self.keystone.auth_token)
+            self.glance = glance_client.Client('1', endpoint=glance_url, token=self.keystone.auth_token)
         except Exception, e:
             raise Exception('Error connecting to glance. Glance is required for\
                     building images. Original exception: %s' % e.message)
@@ -120,9 +117,8 @@ class StackEnvironment(Singleton):
         ramdisk_id and kernel_id and values are the property values
         @return: glance image id @raise Exception:
         """
-        image_meta = {'container_format': container_format, 'disk_format':
-                format, 'is_public': is_public, 'min_disk': min_disk, 'min_ram':
-                min_ram, 'name': name, 'properties': properties}
+        image_meta = {'container_format': container_format, 'disk_format': format, 'is_public': is_public,
+                      'min_disk': min_disk, 'min_ram': min_ram, 'name': name, 'properties': properties}
         try:
             image_meta['data'] = open(local_path, "r")
         except Exception, e:
@@ -149,9 +145,8 @@ class StackEnvironment(Singleton):
                 image_file.write(chunk)
         return image_file
 
-    def upload_volume_to_cinder(self, name, volume_size=None, local_path=None,
-            location=None, format='raw', container_format='bare',
-            is_public=True, keep_image=True):
+    def upload_volume_to_cinder(self, name, volume_size=None, local_path=None, location=None, format='raw',
+                                container_format='bare', is_public=True, keep_image=True):
         """
 
         @param name: human readable name for volume in cinder
@@ -250,7 +245,6 @@ class StackEnvironment(Singleton):
         else:
             raise Exception("Unable to create blank image")
 
-
     def _remove_blank_image(self, blank_image_name):
         rc = os.system("rm %s" % blank_image_name)
         if rc == 0:
@@ -258,9 +252,8 @@ class StackEnvironment(Singleton):
         else:
             raise Exception("Unable to create blank image")
 
-    def launch_instance(self, root_disk=None, install_iso=None, 
-            secondary_iso=None, floppy=None, aki=None, ari=None, cmdline=None,
-            userdata=None, direct_boot=False):
+    def launch_instance(self, root_disk=None, install_iso=None, secondary_iso=None, floppy=None, aki=None, ari=None,
+                        cmdline=None, userdata=None, direct_boot=False):
         """
 
         @param root_disk: tuple where first element is 'blank', 'cinder', or
@@ -290,14 +283,13 @@ class StackEnvironment(Singleton):
                 #Create a blank qcow2 image and uploads it
                 blank_image_name = self._create_blank_image(root_disk_size)
                 if aki and ari and cmdline:
-                    root_disk_properties = {'kernel_id': aki, 
-                            'ramdisk_id': ari, 'os_command_line': cmdline}
+                    root_disk_properties = {'kernel_id': aki, 'ramdisk_id': ari, 'os_command_line': cmdline}
                 else:
                     root_disk_properties = {}
-                root_disk_image_id = self.upload_image_to_glance(
-                        'blank %dG disk' % root_disk_size, 
-                        local_path=blank_image_name, format='qcow2',
-                        properties=root_disk_properties)
+                root_disk_image_id = self.upload_image_to_glance('blank %dG disk' % root_disk_size,
+                                                                 local_path=blank_image_name,
+                                                                 format='qcow2',
+                                                                 properties=root_disk_properties)
                 self._remove_blank_image(blank_image_name)
             elif root_disk[0] == 'glance':
                 root_disk_image_id = root_disk[1]
@@ -311,16 +303,14 @@ class StackEnvironment(Singleton):
             elif install_iso[0] == 'glance':
                 install_iso_id = self.create_volume_from_image(install_iso[1])
             else:
-                raise Exception("Install ISO must be of type 'cinder' or \
-                        'glance'")
+                raise Exception("Install ISO must be of type 'cinder' or 'glance'")
         if secondary_iso:
             if secondary_iso[0] == 'cinder':
                 secondary_iso_id = secondary_iso[1]
             elif secondary_iso[0] == 'glance':
                 secondary_iso_id = self.create_volume_from_image(secondary_iso_id)
             else:
-                raise Exception("Secondary ISO must be of type 'cinder' or\
-                        'glance'")
+                raise Exception("Secondary ISO must be of type 'cinder' or 'glance'")
         if floppy:
             if floppy[0] == 'cinder':
                 floppy_id = floppy[1]
@@ -334,39 +324,31 @@ class StackEnvironment(Singleton):
             instance = None
             # 0 crdom drives are needed
             if not install_iso and not secondary_iso and not floppy:
-                instance = self._launch_network_install(root_disk_image_id,
-                        userdata)
+                instance = self._launch_network_install(root_disk_image_id, userdata)
             # 1 cdrom drive is needed
             elif install_iso and not secondary_iso and not floppy:
-                instance = self._launch_single_cdrom_install(root_disk_image_id,
-                        userdata, install_iso_id)
+                instance = self._launch_single_cdrom_install(root_disk_image_id, userdata, install_iso_id)
             # 2 cdrom drives are needed
             elif install_iso and secondary_iso and not floppy:
-                instance = self._launch_instance_with_dual_cdrom(root_disk_image_id,
-                        install_iso_id, secondary_iso_id)
+                instance = self._launch_instance_with_dual_cdrom(root_disk_image_id, install_iso_id, secondary_iso_id)
             if instance:
                 return NovaInstance(instance, self)
 
         #blank root disk with ISO, ISO2 and Floppy - Windows
         if install_iso and secondary_iso and floppy:
-
-            instance = self._launch_windows_install(root_disk_image_id,
-                    install_iso_id, secondary_iso_id, floppy_id)
+            instance = self._launch_windows_install(root_disk_image_id, install_iso_id, secondary_iso_id, floppy_id)
             return NovaInstance(instance, self)
 
         #blank root disk with aki, ari and cmdline. install iso is optional.
         if aki and ari and cmdline and userdata:
-          
-            instance = self._launch_direct_boot(root_disk_image_id, userdata,
-                    install_iso=install_iso_id)
+            instance = self._launch_direct_boot(root_disk_image_id, userdata, install_iso=install_iso_id)
             return NovaInstance(instance, self)
 
     def _launch_network_install(self, root_disk, userdata):
         #TODO: check the kickstart file in userdata for sanity
         self.log.debug("Starting instance for network install")
         image = self.glance.images.get(root_disk)
-        instance = self.nova.servers.create("Install from network", image, "2",
-                userdata=userdata)
+        instance = self.nova.servers.create("Install from network", image, "2", userdata=userdata)
         return instance
 
     def _launch_single_cdrom_install(self, root_disk, userdata, install_iso):
@@ -383,20 +365,17 @@ class StackEnvironment(Singleton):
                      "disk_bus": "ide",
                     },
                     ]
-                instance = self.nova.servers.create("Install with single cdrom",
-                        image, "2",
-                        block_device_mapping_v2=block_device_mapping_v2,
-                        userdata=userdata)
+                instance = self.nova.servers.create("Install with single cdrom", image, "2",
+                                                    block_device_mapping_v2=block_device_mapping_v2,
+                                                    userdata=userdata)
                 return instance
             else:
                 #TODO: use BDM mappings from grizzly to launch instance
                 pass
         else:
-            raise Exception("Install ISO image id is required for single cdrom\
-                    drive installations.")
+            raise Exception("Install ISO image id is required for single cdrom drive installations.")
 
-    def _launch_instance_with_dual_cdrom(self, root_disk, install_iso,
-            secondary_iso):
+    def _launch_instance_with_dual_cdrom(self, root_disk, install_iso, secondary_iso):
 
         block_device_mapping_v2 = [
                      {"source_type": "volume",
@@ -416,8 +395,8 @@ class StackEnvironment(Singleton):
                     ]
 
         image = self.glance.images.get(root_disk)
-        instance = self.nova.servers.create("Install with dual cdroms", image, "2",
-                meta={}, block_device_mapping_v2=block_device_mapping_v2)
+        instance = self.nova.servers.create("Install with dual cdroms", image, "2", meta={},
+                                            block_device_mapping_v2=block_device_mapping_v2)
         return instance
 
     def _launch_direct_boot(self, root_disk, userdata, install_iso=None):
@@ -437,12 +416,11 @@ class StackEnvironment(Singleton):
            #must be a network install
            block_device_mapping_v2 = None
         instance = self.nova.servers.create("direct-boot-linux", image, "2",
-                block_device_mapping_v2=block_device_mapping_v2,
-                userdata=userdata)
+                                            block_device_mapping_v2=block_device_mapping_v2,
+                                            userdata=userdata)
         return instance
     
-    def _launch_windows_install(self, root_disk, install_cdrom, drivers_cdrom,
-            autounattend_floppy):
+    def _launch_windows_install(self, root_disk, install_cdrom, drivers_cdrom, autounattend_floppy):
 
         block_device_mapping_v2 = [
                      {"source_type": "volume",
@@ -468,8 +446,8 @@ class StackEnvironment(Singleton):
                     ]
 
         image = self.glance.images.get(root_disk)
-        instance = self.nova.servers.create("windows-volume-backed", image, "2",
-                meta={}, block_device_mapping_v2=block_device_mapping_v2)
+        instance = self.nova.servers.create("windows-volume-backed", image, "2", meta={},
+                                            block_device_mapping_v2=block_device_mapping_v2)
         return instance
 
     def is_cinder(self):
