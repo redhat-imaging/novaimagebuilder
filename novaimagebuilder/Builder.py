@@ -136,7 +136,7 @@ class Builder(object):
                 break
             # Remove any direct boot properties if they exist
             properties = image.properties
-        for key in ['kernel_id', 'ramdisk_id', 'command_line']:
+        for key in ['kernel_id', 'ramdisk_id', 'os_command_line']:
             if key in properties:
                 del properties[key]
             meta = {'properties': properties}
