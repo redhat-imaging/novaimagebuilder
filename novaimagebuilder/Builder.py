@@ -92,7 +92,9 @@ class Builder(object):
         instance = self._wait_for_shutoff(self.os_delegate.install_instance, inactivity_timeout)
         # Snapshot with self.install_config['name']
         if instance:
-            finished_image_id = instance.instance.create_image(self.install_config['name'])
+            meta = {'is_public': self.install_config['public']}
+            finished_image_id = instance.instance.create_image(self.install_config['name'],
+                    metadata=meta)
             self._wait_for_glance_snapshot(finished_image_id)
             self._terminate_instance(instance.id)
             if self.os_delegate.iso_volume_delete:
