@@ -151,7 +151,7 @@ class StackEnvironment(Singleton):
 
     def upload_volume_to_cinder(self, name, volume_size=None, local_path=None,
             location=None, format='raw', container_format='bare',
-            is_public=True, keep_image=True):
+            is_public=False, keep_image=True):
         """
 
         @param name: human readable name for volume in cinder

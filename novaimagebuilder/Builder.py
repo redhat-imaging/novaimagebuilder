@@ -92,11 +92,18 @@ class Builder(object):
         instance = self._wait_for_shutoff(self.os_delegate.install_instance, inactivity_timeout)
         # Snapshot with self.install_config['name']
         if instance:
-            meta = {'is_public': self.install_config['public']}
+            meta = {}
+            meta['is_public'] = self.install_config['public']
             finished_image_id = instance.instance.create_image(self.install_config['name'])
-            finished_image = self.env.glance.images.get(finished_image_id)
-            finished_image.update(**meta)
             self._wait_for_glance_snapshot(finished_image_id)
+            finished_image = self.env.glance.images.get(finished_image_id)
+            # Remove any direct boot properties if they exist
+            properties = finished_image.properties
+            for key in ['kernel_id', 'ramdisk_id', 'os_command_line']:
+                if key in properties:
+                    del properties[key]
+            meta['properties'] = properties
+            finished_image.update(**meta)
             self._terminate_instance(instance.id)
             if self.os_delegate.iso_volume_delete:
                 self.env.cinder.volumes.get(self.os_delegate.iso_volume).delete()
@@ -137,13 +144,6 @@ class Builder(object):
                 raise Exception("Image entered error status while waiting for completion")
             elif image.status == 'active':
                 break
-            # Remove any direct boot properties if they exist
-            properties = image.properties
-        for key in ['kernel_id', 'ramdisk_id', 'os_command_line']:
-            if key in properties:
-                del properties[key]
-            meta = {'properties': properties}
-            image.update(**meta)
 
     def _terminate_instance(self, instance_id):
         nova = self.env.nova
