@@ -123,7 +123,7 @@ class UbuntuOS(BaseOS):
         if self.install_config['direct_boot']:
             self.log.debug("Launching direct boot ISO install instance")
             if self.install_type == "iso":
-                self.install_instance = self.env.launch_instance(
+                self.install_instance = self.env.launch_install_instance(
                         root_disk=('blank', 10), 
                         install_iso=('cinder', self.iso_volume),
                         aki=self.iso_aki, ari=self.iso_ari, 
@@ -131,7 +131,7 @@ class UbuntuOS(BaseOS):
                         direct_boot=True)
 
             if self.install_type == "tree":
-                self.install_instance = self.env.launch_instance(
+                self.install_instance = self.env.launch_install_instance(
                         root_disk=('blank', 10), aki=self.tree_aki,
                         ari=self.tree_ari, cmdline=self.cmdline,
                         userdata=self.install_script, direct_boot=True)
@@ -139,11 +139,11 @@ class UbuntuOS(BaseOS):
         else:
             if self.install_type == "tree":
                 self.log.debug("Launching syslinux install instance")
-                self.install_instance = self.env.launch_instance(root_disk=(
+                self.install_instance = self.env.launch_install_instance(root_disk=(
                     'glance', self.boot_disk_id), userdata=self.install_script)
 
             if self.install_type == "iso":
-                self.install_instance = self.env.launch_instance(root_disk=(
+                self.install_instance = self.env.launch_install_instance(root_disk=(
                     'glance', self.boot_disk_id), install_iso=('cinder',
                         self.iso_volume), userdata=self.install_script)
 
