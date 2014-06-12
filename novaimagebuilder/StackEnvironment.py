@@ -252,7 +252,7 @@ class StackEnvironment(Singleton):
         else:
             raise Exception("Unable to create blank image")
 
-    def launch_instance(self, root_disk=None, install_iso=None, secondary_iso=None, floppy=None, aki=None, ari=None,
+    def launch_install_instance(self, root_disk=None, install_iso=None, secondary_iso=None, floppy=None, aki=None, ari=None,
                         cmdline=None, userdata=None, direct_boot=False):
         """
 
@@ -343,6 +343,21 @@ class StackEnvironment(Singleton):
         if aki and ari and cmdline and userdata:
             instance = self._launch_direct_boot(root_disk_image_id, userdata, install_iso=install_iso_id)
             return NovaInstance(instance, self)
+
+    def launch_instance(self, name, root_disk):
+        """
+        Launch a new instance in Nova with a given glance image id.
+
+        @param root_disk: The glance id str of the image to use.
+        @param name: A str name for the instance in Nova.
+        @return: A NovaInstance object wrapping the new instance in Nova.
+        """
+        key_pair = self.nova.keypairs.create(root_disk)
+        self.log.debug('Starting nova instance with glance image %s' % root_disk)
+        image = self.glance.images.get(root_disk)
+        instance = self.nova.servers.create(name, image, '2', key_name=key_pair.name)
+
+        return NovaInstance(instance, self, key_pair=key_pair)
 
     def _launch_network_install(self, root_disk, userdata):
         #TODO: check the kickstart file in userdata for sanity
