@@ -100,7 +100,7 @@ class StackEnvironment(Singleton):
         return self.cinder
 
     def upload_image_to_glance(self, name, local_path=None, location=None, format='raw', min_disk=0, min_ram=0,
-                               container_format='bare', is_public=True, properties={}):
+                               container_format='bare', is_public=False, properties={}):
         """
 
         @param name: human readable name for image in glance
