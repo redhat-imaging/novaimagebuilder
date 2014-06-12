@@ -93,8 +93,9 @@ class Builder(object):
         # Snapshot with self.install_config['name']
         if instance:
             meta = {'is_public': self.install_config['public']}
-            finished_image_id = instance.instance.create_image(self.install_config['name'],
-                    metadata=meta)
+            finished_image_id = instance.instance.create_image(self.install_config['name'])
+            finished_image = self.env.glance.images.get(finished_image_id)
+            finished_image.update(**meta)
             self._wait_for_glance_snapshot(finished_image_id)
             self._terminate_instance(instance.id)
             if self.os_delegate.iso_volume_delete:
