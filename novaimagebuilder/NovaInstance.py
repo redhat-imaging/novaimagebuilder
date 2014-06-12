@@ -15,6 +15,7 @@
 #   limitations under the License.
 
 import logging
+import os
 from time import sleep
 
 
@@ -26,14 +27,28 @@ class NovaInstance(object):
     @param stack_env: An instance of novaimagebuilder.StackEnvironment to use for communication with OpenStack
     """
 
-    def __init__(self, instance, stack_env):
+    def __init__(self, instance, stack_env, key_pair=None):
         self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         self.last_disk_activity = 0
         self.last_net_activity = 0
         self.instance = instance
         self.stack_env = stack_env
         self.floating_ips = []
-    
+        self.key_pair = key_pair
+        self.key_dir = os.path.expanduser('~/') + '.ssh/'
+
+        if self.key_pair:
+            if not os.path.exists(self.key_dir):
+                os.mkdir(self.key_dir, mode=600)
+            private_key_file = open(self.key_dir + key_pair.name, 'w')
+            os.fchmod(private_key_file.fileno(), 0600)
+            private_key_file.write(key_pair.private_key)
+            private_key_file.close()
+            public_key_file = open(self.key_dir + key_pair.name + '.pub', 'w')
+            os.fchmod(public_key_file.fileno(), 0600)
+            public_key_file.write(key_pair.public_key)
+            public_key_file.close()
+
     @property
     def id(self):
         """
@@ -165,8 +180,19 @@ class NovaInstance(object):
                 self.log.debug('Nova instance %s has status %s...' % (_id, self.status))
                 sleep(5)
                 _instance = self.stack_env.nova.servers.get(_id)
-        except Exception:
+        except:
             self.log.debug('Nova instance %s deleted.' % _id)
+
+            if self.key_pair:
+                self.log.debug('Removing key pair: %s' % self.key_pair.name)
+
+                key_dir = os.path.expanduser('~/') + '.ssh/'
+                try:
+                    self.stack_env.nova.keypairs.delete(self.key_pair)
+                    os.remove(key_dir + self.key_pair.name)
+                    os.remove(key_dir + self.key_pair.name + '.pub')
+                except:
+                    self.log.exception('Unable to remove key pair %s%s' % (key_dir, self.key_pair.name))
 
     def create_snapshot(self, image_name, with_properties=None, strip_direct_boot=True):
         """
@@ -186,6 +212,7 @@ class NovaInstance(object):
             if snapshot.status == 'error':
                 raise Exception('Image entered error status while waiting for completion')
             elif snapshot.status == 'active':
+                self.log.debug('Glance image id (%s) is now active' % snapshot_id)
                 break
             sleep(2)
             snapshot = self.stack_env.glance.images.get(snapshot_id)
