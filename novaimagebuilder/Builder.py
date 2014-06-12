@@ -105,7 +105,7 @@ class Builder(object):
 
     def _wait_for_shutoff(self, instance, inactivity_timeout):
         inactivity_countdown = inactivity_timeout        
-        for i in range(1200):
+        for i in range(3600):
             status = instance.status
             if status == "SHUTOFF":
                 self.log.debug("Instance (%s) has entered SHUTOFF state" % instance.id)

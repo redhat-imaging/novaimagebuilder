@@ -273,6 +273,8 @@ class CacheManager(Singleton):
 
     def _do_remote_uploads(self, object_name, local_object_filename, format='raw', container_format='bare',
                            use_cinder=True):
+        if format in [ "aki", "ari" ]:
+            return (None, None)
         if self.env.is_cinder() and use_cinder:
             (glance_id, cinder_id) = self.env.upload_volume_to_cinder(object_name, local_path=local_object_filename,
                                                                       format=format, container_format=container_format)

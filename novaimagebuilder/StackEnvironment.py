@@ -59,7 +59,9 @@ class StackEnvironment(Singleton):
             raise Exception('Error connecting to Nova.  Nova is required for \
                     building images. Original exception: %s' % e.message)
         try:
-            glance_url = self.keystone.service_catalog.get_endpoints()['image'][0]['adminURL']
+            #glance_url = self.keystone.service_catalog.get_endpoints()['image'][0]['adminURL']
+            glance_url = self.keystone.service_catalog.get_endpoints()['image'][0]['publicURL']
+            self.log.debug("Glance URL: %s" % (glance_url))
             self.glance = glance_client.Client('1', endpoint=glance_url,
                     token=self.keystone.auth_token)
         except Exception, e:
@@ -100,7 +102,7 @@ class StackEnvironment(Singleton):
         return self.cinder
 
     def upload_image_to_glance(self, name, local_path=None, location=None, format='raw', min_disk=0, min_ram=0,
-                               container_format='bare', is_public=True, properties={}):
+                               container_format='bare', is_public=False, properties={}):
         """
 
         @param name: human readable name for image in glance
@@ -131,9 +133,11 @@ class StackEnvironment(Singleton):
             else:
                 raise e
         
-        image = self.glance.images.create(name=name)
-        self.log.debug("Started uploading to Glance")
-        image.update(**image_meta)
+        self.log.debug("Started uploading to Glance with a single call")
+        image = self.glance.images.create(**image_meta)
+        #image = self.glance.images.create(name=name)
+        #self.log.debug("Started uploading to Glance")
+        #image.update(**image_meta)
         while image.status != 'active':
             image = self.glance.images.get(image.id)
             if image.status == 'error':
@@ -151,7 +155,7 @@ class StackEnvironment(Singleton):
 
     def upload_volume_to_cinder(self, name, volume_size=None, local_path=None,
             location=None, format='raw', container_format='bare',
-            is_public=True, keep_image=True):
+            is_public=False, keep_image=True):
         """
 
         @param name: human readable name for volume in cinder
@@ -365,7 +369,7 @@ class StackEnvironment(Singleton):
         #TODO: check the kickstart file in userdata for sanity
         self.log.debug("Starting instance for network install")
         image = self.glance.images.get(root_disk)
-        instance = self.nova.servers.create("Install from network", image, "2",
+        instance = self.nova.servers.create("Install from network", image, "101",
                 userdata=userdata)
         return instance
 
