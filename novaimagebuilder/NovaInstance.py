@@ -36,6 +36,7 @@ class NovaInstance(object):
         self.floating_ips = []
         self.key_pair = key_pair
         self.key_dir = os.path.expanduser('~/') + '.ssh/'
+        self.security_group = None
 
         if self.key_pair:
             if not os.path.exists(self.key_dir):
@@ -164,7 +165,8 @@ class NovaInstance(object):
                 self.log.debug('Instance (%s) has entered SHUTOFF state' % self.id)
                 return True
             if index % 10 == 0:
-                self.log.debug('Waiting for instance status SHUTOFF - current status (%s): %d/%d' % (_status, index, count))
+                self.log.debug(
+                    'Waiting for instance status SHUTOFF - current status (%s): %d/%d' % (_status, index, count))
             if not self.is_active():
                 _timeout -= 1
             else:
@@ -238,3 +240,29 @@ class NovaInstance(object):
         sleep(10)  # Give nova a chance to see the image is active
 
         return snapshot_id
+
+    def open_ssh(self):
+        """
+        Creates a security group with a rule to allow ssh access.
+
+        @return: True or False
+        """
+        try:
+            nova = self.stack_env.nova
+            self.security_group = nova.security_groups.create('NovaImageBuilder-%s' % self.id,
+                                                              'Access to services needed by NovaImageBuilder')
+            rule = nova.security_group_rules.create(self.security_group.id, 'tcp', 22, 22)
+            self._instance.add_security_group(self.security_group)
+            self.log.debug('Added security group %s to instance %s: %s' % (self.security_group.name, self.id, rule))
+            return True
+        except Exception as e:
+            self.log.debug('Failed to add security group %s to %s: %s' % (self.security_group.name, self.id, e))
+            return False
+
+    def close_ssh(self):
+        """
+        Removes the security group.
+
+        """
+        self._instance.remove_security_group(self.security_group)
+        self.security_group = None
