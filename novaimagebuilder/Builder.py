@@ -97,12 +97,8 @@ class Builder(object):
             finished_image_id = instance.instance.create_image(self.install_config['name'])
             self._wait_for_glance_snapshot(finished_image_id)
             finished_image = self.env.glance.images.get(finished_image_id)
-            # Remove any direct boot properties if they exist
-            properties = finished_image.properties
-            for key in ['kernel_id', 'ramdisk_id', 'os_command_line']:
-                if key in properties:
-                    del properties[key]
-            meta['properties'] = properties
+            # Remove all custom properties associated from taking a snapshot
+            meta['properties'] = {} 
             finished_image.update(**meta)
             self._terminate_instance(instance.id)
             if self.os_delegate.iso_volume_delete:
