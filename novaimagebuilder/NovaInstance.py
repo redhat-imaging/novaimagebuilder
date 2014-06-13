@@ -31,7 +31,7 @@ class NovaInstance(object):
         self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         self.last_disk_activity = 0
         self.last_net_activity = 0
-        self.instance = instance
+        self._instance = instance
         self.stack_env = stack_env
         self.floating_ips = []
         self.key_pair = key_pair
@@ -50,13 +50,23 @@ class NovaInstance(object):
             public_key_file.close()
 
     @property
+    def instance(self):
+        """
+        The instance, fetched from nova.
+
+        @return: Instance from nova.
+        """
+        self._instance = self.stack_env.nova.servers.get(self._instance.id)
+        return self._instance
+
+    @property
     def id(self):
         """
         The nova server id of the instance.
 
         @return: id string from nova
         """
-        return self.instance.id
+        return self._instance.id
 
     @property
     def status(self):
@@ -65,7 +75,6 @@ class NovaInstance(object):
 
         @return: status string from nova
         """
-        self.instance = self.stack_env.nova.servers.get(self.instance.id)
         return self.instance.status
 
     def get_disk_and_net_activity(self):
@@ -76,7 +85,7 @@ class NovaInstance(object):
         """
         disk_activity = 0
         net_activity = 0
-        diagnostics = self.instance.diagnostics()[1]
+        diagnostics = self._instance.diagnostics()[1]
         if not diagnostics:
             return 0, 0
         for key, value in diagnostics.items():
@@ -121,7 +130,7 @@ class NovaInstance(object):
         @return: floating_ip: A new FloatingIP object from Nova.
         """
         new_ip = self.stack_env.nova.floating_ips.create()
-        self.instance.add_floating_ip(new_ip)
+        self._instance.add_floating_ip(new_ip)
         self.floating_ips.append(new_ip)
         return new_ip
 
@@ -132,7 +141,7 @@ class NovaInstance(object):
         @param ip_addr: The FloatingIP object to remove.
         """
         self.floating_ips.remove(ip_addr)
-        self.instance.remove_floating_ip(ip_addr)
+        self._instance.remove_floating_ip(ip_addr)
         self.stack_env.nova.floating_ips.delete(ip_addr)
 
     def shutoff(self, timeout=180, in_progress=False):
@@ -145,7 +154,7 @@ class NovaInstance(object):
         @return: boolean
         """
         if not in_progress:
-            self.instance.stop()
+            self._instance.stop()
 
         _timeout = timeout
         count = 1200
@@ -171,15 +180,13 @@ class NovaInstance(object):
 
         """
         _id = self.id
-        self.instance.delete()
+        self._instance.delete()
         self.log.debug('Waiting for instance (%s) to be terminated.' % _id)
 
         try:
-            _instance = self.stack_env.nova.servers.get(_id)
-            while _instance:
+            while self.instance:
                 self.log.debug('Nova instance %s has status %s...' % (_id, self.status))
                 sleep(5)
-                _instance = self.stack_env.nova.servers.get(_id)
         except:
             self.log.debug('Nova instance %s deleted.' % _id)
 
@@ -204,7 +211,7 @@ class NovaInstance(object):
         @raise Exception: When the snapshot reaches 'error' instead of 'active' status.
         @return Glance id of the snapshot image
         """
-        snapshot_id = self.instance.create_image(image_name)
+        snapshot_id = self._instance.create_image(image_name)
         self.log.debug('Waiting for glance image id (%s) to become active' % snapshot_id)
         snapshot = self.stack_env.glance.images.get(snapshot_id)
         while snapshot:
@@ -227,5 +234,7 @@ class NovaInstance(object):
                 snapshot.update(**metadata)
             if isinstance(with_properties, dict):
                 snapshot.update(**with_properties)
+
+        sleep(10)  # Give nova a chance to see the image is active
 
         return snapshot_id
