@@ -357,7 +357,15 @@ class StackEnvironment(Singleton):
         image = self.glance.images.get(root_disk)
         instance = self.nova.servers.create(name, image, '2', key_name=key_pair.name)
 
-        return NovaInstance(instance, self, key_pair=key_pair)
+        # Wait for the instance to be active before returning.
+        for index in range(1, 120, 5):
+            status = self.nova.servers.get(instance.id).status
+            if status == 'ACTIVE':
+                return NovaInstance(instance, self, key_pair=key_pair)
+            else:
+                self.log.debug('Waiting for instance (%s) to become active...' % instance.name)
+                sleep(5)
+        return None
 
     def _launch_network_install(self, root_disk, userdata):
         #TODO: check the kickstart file in userdata for sanity
