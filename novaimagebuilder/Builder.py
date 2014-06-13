@@ -146,6 +146,9 @@ class Builder(object):
                 break
 
     def _terminate_instance(self, instance_id):
+        # TODO: (dkliban) remove sleep statement when 
+        # https://bugs.launchpad.net/nova/+bug/1329882 is fixed
+        sleep(5)
         nova = self.env.nova
         instance = nova.servers.get(instance_id)
         instance.delete()
