@@ -85,10 +85,10 @@ class Builder(object):
 
         @return: image id or None
         """
-        # TODO: Timeouts, activity checking
         instance = self.os_delegate.install_instance
         if instance.shutoff(timeout=inactivity_timeout, in_progress=True):
-            finished_image_id = instance.create_snapshot(self.install_config['name'] + '-jeos')
+            finished_image_id = instance.create_snapshot(self.install_config['name'] + '-jeos',
+                    public=self.install_config['public'])
             instance.terminate()
             if self.os_delegate.iso_volume_delete:
                 self.env.cinder.volumes.get(self.os_delegate.iso_volume).delete()

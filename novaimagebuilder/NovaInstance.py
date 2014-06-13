@@ -203,13 +203,13 @@ class NovaInstance(object):
                 except:
                     self.log.exception('Unable to remove key pair %s%s' % (key_dir, self.key_pair.name))
 
-    def create_snapshot(self, image_name, with_properties=None, strip_direct_boot=True):
+    def create_snapshot(self, image_name, with_properties=None, public=False):
         """
         Create a snapshot image based on this Nova instance.
 
         @param image_name: str Name of the new image snapshot.
         @param with_properties: dict Optional metadata that should be added to the snapshot image.
-        @param strip_direct_boot: boolean Should direct boot parameters be stripped if present? (Default: True)
+        @param public: boolean Should the snapshot be public, default False 
         @raise Exception: When the snapshot reaches 'error' instead of 'active' status.
         @return Glance id of the snapshot image
         """
@@ -225,18 +225,14 @@ class NovaInstance(object):
                 break
             sleep(2)
             snapshot = self.stack_env.glance.images.get(snapshot_id)
-
-        if with_properties or strip_direct_boot:
-            snapshot_properties = snapshot.properties
-            if strip_direct_boot:
-                for key in ('kernel_id', 'ramdisk_id', 'command_line'):
-                    if key in snapshot_properties:
-                        del snapshot_properties[key]
-                metadata = {'properties': snapshot_properties}
-                snapshot.update(**metadata)
-            if isinstance(with_properties, dict):
-                snapshot.update(**with_properties)
-
+        metadata = {'is_public': public}
+        if isinstance(with_properties, dict):
+            metadata['properties'] = with_properties
+        else:
+            metadata['properties'] = {}
+        snapshot.update(**metadata)
+        # TODO: (dkliban) Remove the sleep statement when 
+        # https://bugs.launchpad.net/nova/+bug/1329882 is fixed
         sleep(10)  # Give nova a chance to see the image is active
 
         return snapshot_id
