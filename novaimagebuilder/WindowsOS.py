@@ -70,12 +70,12 @@ class WindowsOS(BaseOS):
         if self.install_type == "iso":
             self.log.debug("Launching windows install instance")
             if self.env.is_floppy():
-                self.install_instance = self.env.launch_instance(root_disk=('blank', 10),
+                self.install_instance = self.env.launch_install_instance(root_disk=('blank', 10),
                         install_iso=('cinder', self.iso_volume),
                         secondary_iso=('cinder',self.driver_iso_volume),
                         floppy=('cinder',self.floppy_volume))
             else:
-                self.install_instance = self.env.launch_instance(root_disk=('blank', 10), install_iso=('cinder', self.iso_volume), secondary_iso=('cinder', self.driver_iso_volume))
+                self.install_instance = self.env.launch_install_instance(root_disk=('blank', 10), install_iso=('cinder', self.iso_volume), secondary_iso=('cinder', self.driver_iso_volume))
                 
     def _respin_iso(self, iso_path, arch):
         try:
