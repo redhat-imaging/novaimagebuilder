@@ -247,9 +247,12 @@ class NovaInstance(object):
             nova = self.stack_env.nova
             self.security_group = nova.security_groups.create('NovaImageBuilder-%s' % self.id,
                                                               'Access to services needed by NovaImageBuilder')
+            self.log.debug('Security group (id=%s, name=%s created.' % (self.security_group.id,
+                                                                        self.security_group.name))
             rule = nova.security_group_rules.create(self.security_group.id, 'tcp', 22, 22)
-            self._instance.add_security_group(self.security_group)
-            self.log.debug('Added security group %s to instance %s: %s' % (self.security_group.name, self.id, rule))
+            self.log.debug('Rule created: %s' % str(rule.to_dict()))
+            nova.servers.add_security_group(self.id, self.security_group.name)
+            self.log.debug('Added security group %s and added to instance %s' % (self.security_group.name, self.id))
             return True
         except Exception as e:
             self.log.debug('Failed to add security group %s to %s: %s' % (self.security_group.name, self.id, e))
@@ -260,5 +263,6 @@ class NovaInstance(object):
         Removes the security group.
 
         """
-        self._instance.remove_security_group(self.security_group)
+        self.stack_env.nova.servers.remove_security_group(self.id, self.security_group.name)
+        self.stack_env.nova.security_groups.delete(self.security_group)
         self.security_group = None
