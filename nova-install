@@ -63,6 +63,8 @@ class Arguments(Singleton):
                                help='Print debugging output to the logfile. (default: %(default)s)')
         argparser.add_argument('--direct_boot', action='store_true', default=False,
                                help='Provide kernel command line at launch of instance.  Instead of building a syslinux image. (default: %(default)s)')
+        argparser.add_argument('--public', action='store_true', default=False,
+                               help='Make image publically available in Glance. (default: %(default)s)')
 
         return argparser
 
@@ -119,7 +121,8 @@ class Application(Singleton):
                               'flavor': self.arguments.instance_flavor,
                               'storage': self.arguments.image_storage,
                               'name': self.arguments.name,
-                              'direct_boot': self.arguments.direct_boot}
+                              'direct_boot': self.arguments.direct_boot,
+                              'public': self.arguments.public}
 
             self.builder = Builder(self.arguments.os,
                                    install_location=location,
