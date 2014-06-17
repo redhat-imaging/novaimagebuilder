@@ -158,15 +158,15 @@ class NovaInstance(object):
             self._instance.stop()
 
         _timeout = timeout
-        count = 1200
-        for index in range(count):
+        index = 0
+        while(True):
             _status = self.status
             if _status == 'SHUTOFF':
                 self.log.debug('Instance (%s) has entered SHUTOFF state' % self.id)
                 return True
             if index % 10 == 0:
                 self.log.debug(
-                    'Waiting for instance status SHUTOFF - current status (%s): %d/%d' % (_status, index, count))
+                    'Waiting for instance status SHUTOFF')
             if not self.is_active():
                 _timeout -= 1
             else:
@@ -174,6 +174,7 @@ class NovaInstance(object):
             if _timeout == 0:
                 self.log.debug('Instance has become inactive but running. Please investigate the actual nova instance.')
                 return False
+            index += 1
             sleep(1)
 
     def terminate(self):
