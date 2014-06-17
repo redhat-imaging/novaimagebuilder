@@ -65,6 +65,8 @@ class Arguments(Singleton):
                                help='Provide kernel command line at launch of instance.  Instead of building a syslinux image. (default: %(default)s)')
         argparser.add_argument('--public', action='store_true', default=False,
                                help='Make image publically available in Glance. (default: %(default)s)')
+        argparser.add_argument('--inactivity_timeout', default='180',
+                               help='Amount of seconds to wait for disk and network activity before timing out. (default: %(default)s)')
 
         return argparser
 
@@ -122,7 +124,8 @@ class Application(Singleton):
                               'storage': self.arguments.image_storage,
                               'name': self.arguments.name,
                               'direct_boot': self.arguments.direct_boot,
-                              'public': self.arguments.public}
+                              'public': self.arguments.public,
+                              'timeout': self.arguments.inactivity_timeout}
 
             self.builder = Builder(self.arguments.os,
                                    install_location=location,
@@ -133,7 +136,7 @@ class Application(Singleton):
             # TODO: create a better way to run this.
             # The inactivity timeout is 180 seconds
             self.builder.run()
-            if not self.builder.wait_for_completion(180):
+            if not self.builder.wait_for_completion(install_config['timeout']):
                 sys.exit(1)
 
         elif self.arguments.os_list:
