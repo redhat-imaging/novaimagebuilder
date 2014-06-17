@@ -52,7 +52,7 @@ class Arguments(Singleton):
                                help='The architecture the image is built for. (default: %(default)s)')
         argparser.add_argument('--disk_size', type=int, default=10,
                                help='Size of the image root disk in gigabytes. (default: %(default)s)')
-        argparser.add_argument('--instance_flavor', default='vanilla',
+        argparser.add_argument('--instance_flavor', default='2',
                                help='The type of instance to use for building the image. (default: %(default)s)')
         argparser.add_argument('--name', help='A name to assign to the built image.', default='new-image')
 

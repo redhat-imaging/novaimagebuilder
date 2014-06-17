@@ -73,9 +73,14 @@ class WindowsOS(BaseOS):
                 self.install_instance = self.env.launch_install_instance(root_disk=('blank', 10),
                         install_iso=('cinder', self.iso_volume),
                         secondary_iso=('cinder',self.driver_iso_volume),
-                        floppy=('cinder',self.floppy_volume))
+                        floppy=('cinder',self.floppy_volume),
+                        flavor=self.install_config['flavor'])
             else:
-                self.install_instance = self.env.launch_install_instance(root_disk=('blank', 10), install_iso=('cinder', self.iso_volume), secondary_iso=('cinder', self.driver_iso_volume))
+                self.install_instance =
+                self.env.launch_install_instance(root_disk=('blank', 10),
+                        install_iso=('cinder', self.iso_volume),
+                        secondary_iso=('cinder', self.driver_iso_volume),
+                        flavor=self.install_config['flavor'])
                 
     def _respin_iso(self, iso_path, arch):
         try:
