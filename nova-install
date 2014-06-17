@@ -125,7 +125,7 @@ class Application(Singleton):
                               'name': self.arguments.name,
                               'direct_boot': self.arguments.direct_boot,
                               'public': self.arguments.public,
-                              'timeout': self.arguments.inactivity_timeout}
+                              'timeout': int(self.arguments.inactivity_timeout)}
 
             self.builder = Builder(self.arguments.os,
                                    install_location=location,
