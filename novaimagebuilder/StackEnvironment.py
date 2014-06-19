@@ -353,12 +353,13 @@ class StackEnvironment(Singleton):
                     install_iso=install_iso_id, flavor=flavor)
             return NovaInstance(instance, self, floating_ip=floating_ip)
 
-    def launch_instance(self, name, root_disk, flavor, floating_ip=False):
+    def launch_instance(self, name, root_disk, flavor=None, floating_ip=False):
         """
         Launch a new instance in Nova with a given glance image id.
 
-        @param root_disk: The glance id str of the image to use.
         @param name: A str name for the instance in Nova.
+        @param root_disk: The glance id str of the image to use.
+        @param flavor: The flavor reference id to use for the instance.
         @return: A NovaInstance object wrapping the new instance in Nova.
         """
         key_pair = self.nova.keypairs.create(root_disk)
@@ -367,11 +368,14 @@ class StackEnvironment(Singleton):
         instance = self.nova.servers.create(name, image, flavor, key_name=key_pair.name)
 
         # Wait for the instance to be active before returning.
-        for index in range(1, 120, 5):
+        for index in range(1, 360, 5):
             status = self.nova.servers.get(instance.id).status
             if status == 'ACTIVE':
                 return NovaInstance(instance, self, key_pair=key_pair,
                         floating_ip=floating_ip)
+            elif status == 'ERROR':
+                self.log.debug('Instance (%s: %s) has status %s.' % (instance.name, instance.id, instance.status))
+                return None
             else:
                 self.log.debug('Waiting for instance (%s) to become active...' % instance.name)
                 sleep(5)

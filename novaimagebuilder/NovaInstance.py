@@ -99,7 +99,7 @@ class NovaInstance(object):
         """
         disk_activity = 0
         net_activity = 0
-        diagnostics = self._instance.diagnostics()[1]
+        diagnostics = self.instance.diagnostics()[1]
         if not diagnostics:
             return 0, 0
         for key, value in diagnostics.items():
@@ -119,10 +119,10 @@ class NovaInstance(object):
         try:
             current_disk_activity, current_net_activity = self.get_disk_and_net_activity()
         except Exception, e:
-            saved_exception = e
             # Since we can't get disk and net activity we assume
             # instance is not active (usually before instance finished 
             # spawning.
+            self.log.debug('Caught exception while polling for disk and network activity: %s' % e)
             return False
         self.log.debug("Disk activity: %s" % current_disk_activity)
         self.log.debug("Network activity: %s" % current_net_activity)
@@ -170,7 +170,13 @@ class NovaInstance(object):
         if not in_progress:
             self._instance.stop()
 
-        _timeout = timeout
+        try:
+            self.get_disk_and_net_activity()
+            _timeout = timeout
+        except Exception as e:
+            self.log.debug('Unable to check for disk and network activity. Setting timeout to 1 hour. %s' % e)
+            _timeout = 216000
+
         index = 0
         while(True):
             _status = self.status
