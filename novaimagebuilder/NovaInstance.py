@@ -58,6 +58,7 @@ class NovaInstance(object):
                     self.add_floating_ip()
                     return
                 elif status == 'ERROR':
+                    self.log.debug('Instance (%s: %s) has status %s.' % (instance.name, instance.id, instance.status))
                     return
                 else:
                     self.log.debug('Waiting for instance (%s) to become active...' % instance.name)

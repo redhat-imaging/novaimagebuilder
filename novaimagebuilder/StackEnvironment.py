@@ -360,6 +360,8 @@ class StackEnvironment(Singleton):
         @param name: A str name for the instance in Nova.
         @param root_disk: The glance id str of the image to use.
         @param flavor: The flavor reference id to use for the instance.
+        @param floating_ip: Boolean indicating if a floating ip should be
+        assigned to instance.
         @return: A NovaInstance object wrapping the new instance in Nova.
         """
         key_pair = self.nova.keypairs.create(root_disk)
