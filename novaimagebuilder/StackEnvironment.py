@@ -366,10 +366,13 @@ class StackEnvironment(Singleton):
         instance = self.nova.servers.create(name, image, flavor, key_name=key_pair.name)
 
         # Wait for the instance to be active before returning.
-        for index in range(1, 120, 5):
+        for index in range(1, 360, 5):
             status = self.nova.servers.get(instance.id).status
             if status == 'ACTIVE':
                 return NovaInstance(instance, self, key_pair=key_pair)
+            elif status == 'ERROR':
+                self.log.debug('Instance (%s: %s) has status %s.' % (instance.name, instance.id, instance.status))
+                return None
             else:
                 self.log.debug('Waiting for instance (%s) to become active...' % instance.name)
                 sleep(5)
