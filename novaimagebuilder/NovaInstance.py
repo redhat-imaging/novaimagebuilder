@@ -27,7 +27,7 @@ class NovaInstance(object):
     @param stack_env: An instance of novaimagebuilder.StackEnvironment to use for communication with OpenStack
     """
 
-    def __init__(self, instance, stack_env, key_pair=None):
+    def __init__(self, instance, stack_env, key_pair=None, floating_ip=False):
         self.log = logging.getLogger('%s.%s' % (__name__, self.__class__.__name__))
         self.last_disk_activity = 0
         self.last_net_activity = 0
@@ -49,6 +49,20 @@ class NovaInstance(object):
             os.fchmod(public_key_file.fileno(), 0600)
             public_key_file.write(key_pair.public_key)
             public_key_file.close()
+
+        if floating_ip :
+            # Wait for the instance to be active before assigning floaiting ip
+            for index in range(1, 120, 5):
+                status = self.stack_env.nova.servers.get(instance.id).status
+                if status == 'ACTIVE':
+                    self.add_floating_ip()
+                    return
+                elif status == 'ERROR':
+                    self.log.debug('Instance (%s: %s) has status %s.' % (instance.name, instance.id, instance.status))
+                    return
+                else:
+                    self.log.debug('Waiting for instance (%s) to become active...' % instance.name)
+                    sleep(5)
 
     @property
     def instance(self):
@@ -188,6 +202,9 @@ class NovaInstance(object):
         Stop and delete the instance from Nova.
 
         """
+        ips_to_remove = self.floating_ips[:]
+        for ip in ips_to_remove:
+            self.remove_floating_ip(ip)
         _id = self.id
         self._instance.delete()
         self.log.debug('Waiting for instance (%s) to be terminated.' % _id)

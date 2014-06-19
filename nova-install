@@ -67,6 +67,8 @@ class Arguments(Singleton):
                                help='Make image publically available in Glance. (default: %(default)s)')
         argparser.add_argument('--inactivity_timeout', default='180',
                                help='Amount of seconds to wait for disk and network activity before timing out. (default: %(default)s)')
+        argparser.add_argument('--request_floating_ip', action='store_true', default=False,
+                               help='Assign floating ip to the install instance. Some cloud providers don not allow access to outside world without a floating IP. (default: %(default)s)')
 
         return argparser
 
@@ -125,7 +127,8 @@ class Application(Singleton):
                               'name': self.arguments.name,
                               'direct_boot': self.arguments.direct_boot,
                               'public': self.arguments.public,
-                              'timeout': int(self.arguments.inactivity_timeout)}
+                              'timeout': int(self.arguments.inactivity_timeout),
+                              'floating_ip': self.arguments.request_floating_ip}
 
             self.builder = Builder(self.arguments.os,
                                    install_location=location,

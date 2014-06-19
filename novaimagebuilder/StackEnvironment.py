@@ -254,7 +254,7 @@ class StackEnvironment(Singleton):
 
     def launch_install_instance(self, root_disk=None, install_iso=None,
             secondary_iso=None, floppy=None, aki=None, ari=None, cmdline=None,
-            userdata=None, direct_boot=False, flavor=None):
+            userdata=None, direct_boot=False, flavor=None, floating_ip=False):
         """
 
         @param root_disk: tuple where first element is 'blank', 'cinder', or
@@ -276,6 +276,8 @@ class StackEnvironment(Singleton):
         @param direct_boot: boolean denoting whether kernel command line can be
         specified as property of glance image
         @param flavor: string representing flavor of instance to launch
+        @param floating_ip: boolean representing whether or not a floating ip
+        should be assigned to the instance
         @return: NovaInstance launched @raise Exception:
         """
         if root_disk:
@@ -337,27 +339,29 @@ class StackEnvironment(Singleton):
                 instance = self._launch_instance_with_dual_cdrom(root_disk_image_id,
                         install_iso_id, secondary_iso_id, flavor)
             if instance:
-                return NovaInstance(instance, self)
+                return NovaInstance(instance, self, floating_ip=floating_ip)
 
         #blank root disk with ISO, ISO2 and Floppy - Windows
         if install_iso and secondary_iso and floppy:
             instance = self._launch_windows_install(root_disk_image_id,
                     install_iso_id, secondary_iso_id, floppy_id, flavor)
-            return NovaInstance(instance, self)
+            return NovaInstance(instance, self, floating_ip=floating_ip)
 
         #blank root disk with aki, ari and cmdline. install iso is optional.
         if aki and ari and cmdline and userdata:
             instance = self._launch_direct_boot(root_disk_image_id, userdata,
                     install_iso=install_iso_id, flavor=flavor)
-            return NovaInstance(instance, self)
+            return NovaInstance(instance, self, floating_ip=floating_ip)
 
-    def launch_instance(self, name, root_disk, flavor=None):
+    def launch_instance(self, name, root_disk, flavor=None, floating_ip=False):
         """
         Launch a new instance in Nova with a given glance image id.
 
         @param name: A str name for the instance in Nova.
         @param root_disk: The glance id str of the image to use.
         @param flavor: The flavor reference id to use for the instance.
+        @param floating_ip: Boolean indicating if a floating ip should be
+        assigned to instance.
         @return: A NovaInstance object wrapping the new instance in Nova.
         """
         key_pair = self.nova.keypairs.create(root_disk)
@@ -369,7 +373,8 @@ class StackEnvironment(Singleton):
         for index in range(1, 360, 5):
             status = self.nova.servers.get(instance.id).status
             if status == 'ACTIVE':
-                return NovaInstance(instance, self, key_pair=key_pair)
+                return NovaInstance(instance, self, key_pair=key_pair,
+                        floating_ip=floating_ip)
             elif status == 'ERROR':
                 self.log.debug('Instance (%s: %s) has status %s.' % (instance.name, instance.id, instance.status))
                 return None

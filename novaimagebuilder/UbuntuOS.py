@@ -128,27 +128,31 @@ class UbuntuOS(BaseOS):
                         install_iso=('cinder', self.iso_volume),
                         aki=self.iso_aki, ari=self.iso_ari, 
                         cmdline=self.cmdline, userdata=self.install_script,
-                        direct_boot=True, flavor=self.install_config['flavor'])
+                        direct_boot=True, flavor=self.install_config['flavor'],
+                        floating_ip=self.install_config['floating_ip'])
 
             if self.install_type == "tree":
                 self.install_instance = self.env.launch_install_instance(
                         root_disk=('blank', 10), aki=self.tree_aki,
                         ari=self.tree_ari, cmdline=self.cmdline,
                         userdata=self.install_script, direct_boot=True,
-                        flavor=self.install_config['flavor'])
+                        flavor=self.install_config['flavor'],
+                        floating_ip=self.install_config['floating_ip'])
 
         else:
             if self.install_type == "tree":
                 self.log.debug("Launching syslinux install instance")
                 self.install_instance = self.env.launch_install_instance(root_disk=(
                     'glance', self.boot_disk_id), userdata=self.install_script,
-                    flavor=self.install_config['flavor'])
+                    flavor=self.install_config['flavor'],
+                    floating_ip=self.install_config['floating_ip'])
 
             if self.install_type == "iso":
                 self.install_instance = self.env.launch_install_instance(root_disk=(
                     'glance', self.boot_disk_id), install_iso=('cinder',
                         self.iso_volume), userdata=self.install_script,
-                    flavor=self.install_config['flavor'])
+                    flavor=self.install_config['flavor'],
+                    floating_ip=self.install_config['floating_ip'])
 
     def update_status(self):
         return "RUNNING"
