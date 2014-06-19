@@ -351,12 +351,13 @@ class StackEnvironment(Singleton):
                     install_iso=install_iso_id, flavor=flavor)
             return NovaInstance(instance, self)
 
-    def launch_instance(self, name, root_disk, flavor):
+    def launch_instance(self, name, root_disk, flavor=None):
         """
         Launch a new instance in Nova with a given glance image id.
 
-        @param root_disk: The glance id str of the image to use.
         @param name: A str name for the instance in Nova.
+        @param root_disk: The glance id str of the image to use.
+        @param flavor: The flavor reference id to use for the instance.
         @return: A NovaInstance object wrapping the new instance in Nova.
         """
         key_pair = self.nova.keypairs.create(root_disk)
