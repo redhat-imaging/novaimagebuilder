@@ -165,7 +165,7 @@ class NovaInstance(object):
             _timeout = 216000
 
         index = 0
-        while(True):
+        while True:
             _status = self.status
             if _status == 'SHUTOFF':
                 self.log.debug('Instance (%s) has entered SHUTOFF state' % self.id)
@@ -188,6 +188,9 @@ class NovaInstance(object):
         Stop and delete the instance from Nova.
 
         """
+        for ip in self.floating_ips:
+            self.remove_floating_ip(ip)
+
         _id = self.id
         self._instance.delete()
         self.log.debug('Waiting for instance (%s) to be terminated.' % _id)
