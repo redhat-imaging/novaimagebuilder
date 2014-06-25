@@ -77,8 +77,7 @@ class WindowsOS(BaseOS):
                         flavor=self.install_config['flavor'],
                         floating_ip=self.install_config['floating_ip'])
             else:
-                self.install_instance =
-                self.env.launch_install_instance(root_disk=('blank', 10),
+                self.install_instance = self.env.launch_install_instance(root_disk=('blank', 10),
                         install_iso=('cinder', self.iso_volume),
                         secondary_iso=('cinder', self.driver_iso_volume),
                         flavor=self.install_config['flavor'],
