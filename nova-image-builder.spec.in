@@ -20,8 +20,7 @@ BuildRequires: python-setuptools
 
 %description
 nova-image-builder allows you to create OpenStack images from scratch by running
-native OS installers inside of Nova and saving th results
-
+native OS installers inside of Nova and saving the results
 
 %prep
 %setup -q
@@ -34,10 +33,9 @@ python setup.py install -O1 --root=%{buildroot} --skip-build
 
 %{__install} -d %{buildroot}/%{_localstatedir}/lib/novaimagebuilder
 
-#sed -i '/\/usr\/bin\/env python/d' %{buildroot}/%{python_sitelib}/nova-image-builder/*.py
 
 %files
-%doc COPYING
+%doc COPYING README.md
 %dir %attr(0755, root, root) %{_localstatedir}/lib/novaimagebuilder
 %{python_sitelib}/nova_image_builder-*.egg-info
 %{python_sitelib}/novaimagebuilder/*.py*
