@@ -250,14 +250,17 @@ class NovaInstance(object):
             sleep(2)
             snapshot = self.stack_env.glance.images.get(snapshot_id)
         metadata = {'is_public': public}
+        properties = {}
+        # remove all properties generated from snapshot
+        for prop in snapshot.properties:
+            properties[prop] = ''
+        properties['image_type'] = 'image'
+        # set any properties passed in with_properties
         if isinstance(with_properties, dict):
-            metadata['properties'] = with_properties
-        else:
-            metadata['properties'] = {}
+            for prop in with_properties:
+                properties[prop] = with_properties[prop]
+        metadata['properties'] = properties
         snapshot.update(**metadata)
-        # TODO: (dkliban) Remove the sleep statement when 
-        # https://bugs.launchpad.net/nova/+bug/1329882 is fixed
-        sleep(10)  # Give nova a chance to see the image is active
 
         return snapshot_id
 
